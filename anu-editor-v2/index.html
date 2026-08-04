@@ -4,32 +4,64 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ANU Article Studio</title>
+  <script>
+    window.tailwind = window.tailwind || {};
+    window.tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            border: 'hsl(var(--border))',
+            input: 'hsl(var(--input))',
+            ring: 'hsl(var(--ring))',
+            background: 'hsl(var(--background))',
+            foreground: 'hsl(var(--foreground))',
+            muted: {
+              DEFAULT: 'hsl(var(--muted-bg))',
+              foreground: 'hsl(var(--muted-foreground))',
+            },
+            primary: {
+              DEFAULT: 'hsl(var(--primary))',
+              foreground: 'hsl(var(--primary-foreground))',
+            },
+            secondary: {
+              DEFAULT: 'hsl(var(--secondary))',
+              foreground: 'hsl(var(--secondary-foreground))',
+            },
+          },
+          borderRadius: {
+            lg: 'var(--radius)',
+            md: 'calc(var(--radius) - 2px)',
+            sm: 'calc(var(--radius) - 4px)',
+          },
+          fontFamily: {
+            sans: ['Pretendard Variable', 'Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <link rel="stylesheet" href="./app.css">
 </head>
-<body>
-  <main class="app-shell">
+<body class="bg-background text-foreground font-sans antialiased">
+  <main class="app-shell min-h-screen">
     <aside class="sidebar" aria-label="Article navigation">
       <header class="sidebar__head">
         <div class="brand">
           <span class="brand__mark" aria-hidden="true">A</span>
           <div>
             <strong>Article Studio</strong>
-            <span>ANU editorial workspace</span>
+            <span>Notion articles</span>
           </div>
         </div>
-        <button class="icon-button" type="button" aria-label="새 아티클">+</button>
       </header>
 
       <label class="search-field">
         <span class="sr-only">Search articles</span>
-        <input type="search" placeholder="Search title, code, status">
+        <i data-lucide="search" aria-hidden="true"></i>
+        <input type="search" placeholder="Search title or code">
       </label>
-
-      <div class="segmented" role="tablist" aria-label="Status filter">
-        <button class="is-active" type="button">All</button>
-        <button type="button">등록 중</button>
-        <button type="button">업데이트</button>
-      </div>
 
       <nav class="article-list" aria-label="Articles">
         <button class="article-row is-active" type="button">
@@ -42,29 +74,48 @@
           <strong>여름의 식사는 왜 더 단순해질까</strong>
           <em>업데이트</em>
         </button>
-        <button class="article-row" type="button">
-          <span>ARTI26-006</span>
-          <strong>지속가능한 도자기를 만드는 방법</strong>
-          <em>작성 중</em>
-        </button>
       </nav>
     </aside>
 
     <section class="editor" aria-label="Article editor">
       <header class="topbar">
         <div class="title-fields">
+          <div class="title-meta">
+            <span id="saveState" class="save-state">Saved</span>
+            <span>ANU Article Editor</span>
+          </div>
           <input id="englishTitle" class="title-input" value="What Makes a Good Bowl" aria-label="English title">
           <input id="koreanTitle" class="subtitle-input" value="손의 경험 | 좋은 보울을 만드는 요소" aria-label="Korean title">
         </div>
+
         <div class="topbar__actions">
-          <span id="saveState" class="save-state">Saved</span>
-          <button class="plain-button" type="button" id="toggleSidebar">Articles</button>
-          <button class="plain-button" type="button" id="toggleComposerFloat">Float Editor</button>
-          <button class="plain-button" type="button" id="importJson">Import JSON</button>
-          <button class="plain-button" type="button" id="copyJson">Copy JSON</button>
-          <button class="plain-button" type="button" id="copyHtml">Copy HTML</button>
-          <button class="plain-button" type="button" id="toggleExport">Export</button>
-          <button class="primary-button" type="button" id="saveDraft">Save</button>
+          <button class="ui-button ui-button--ghost" type="button" id="toggleSidebar" aria-label="Toggle article list">
+            <i data-lucide="panel-left" aria-hidden="true"></i>
+            <span>Articles</span>
+          </button>
+          <button class="ui-button ui-button--secondary" type="button" id="loadArticles">
+            <i data-lucide="refresh-cw" aria-hidden="true"></i>
+            <span>Load Notion</span>
+          </button>
+          <button class="ui-button ui-button--secondary" type="button" id="toggleExport">
+            <i data-lucide="file-down" aria-hidden="true"></i>
+            <span>Cafe24</span>
+          </button>
+          <details class="utility-menu">
+            <summary class="ui-button ui-button--ghost" aria-label="More actions">
+              <i data-lucide="more-horizontal" aria-hidden="true"></i>
+              <span>More</span>
+            </summary>
+            <div class="utility-menu__content">
+              <button type="button" id="copyHtml"><i data-lucide="code-2" aria-hidden="true"></i>Copy HTML</button>
+              <button type="button" id="copyJson"><i data-lucide="braces" aria-hidden="true"></i>Copy JSON</button>
+              <button type="button" id="importJson"><i data-lucide="upload" aria-hidden="true"></i>Import JSON</button>
+            </div>
+          </details>
+          <button class="ui-button ui-button--primary" type="button" id="saveDraft">
+            <i data-lucide="save" aria-hidden="true"></i>
+            <span>Save draft</span>
+          </button>
           <input id="importJsonInput" class="sr-only" type="file" accept="application/json,.json">
         </div>
       </header>
@@ -72,13 +123,23 @@
       <div class="workarea">
         <section class="composer" aria-label="Composer">
           <div class="composer__floatbar">
-            <span>Editor</span>
-            <button type="button" id="minimizeComposer">Minimize</button>
+            <span>Editing panel</span>
+            <button class="ui-button ui-button--ghost" type="button" id="minimizeComposer">
+              <i data-lucide="minus" aria-hidden="true"></i>
+              Minimize
+            </button>
           </div>
+
           <section class="panel meta-panel">
             <div class="panel__head">
-              <h2>Meta</h2>
-              <button class="plain-button" type="button" id="loadArticles">Load Notion</button>
+              <div>
+                <p class="panel-eyebrow">Article</p>
+                <h2>Publishing details</h2>
+              </div>
+              <button class="ui-button ui-button--ghost" type="button" id="toggleComposerFloat">
+                <i data-lucide="panel-right-open" aria-hidden="true"></i>
+                Overlay
+              </button>
             </div>
             <div class="meta-grid">
               <label class="field">
@@ -95,7 +156,10 @@
                 <span>Article code</span>
                 <input id="articleCode" value="ARTI26-001">
               </label>
-              <button class="plain-button field-button" type="button" id="generateArticleCode">Generate code</button>
+              <button class="ui-button ui-button--secondary field-button" type="button" id="generateArticleCode">
+                <i data-lucide="hash" aria-hidden="true"></i>
+                Generate
+              </button>
               <label class="field">
                 <span>Category</span>
                 <select id="articleCategory">
@@ -115,10 +179,16 @@
                   <option value="project">project</option>
                 </select>
               </label>
-              <label class="field">
+              <div class="field">
                 <span>Publish date</span>
-                <input id="publishDate" type="date">
-              </label>
+                <div class="date-control">
+                  <input id="publishDate" type="date" aria-label="Publish date">
+                  <button type="button" id="publishToday">Today</button>
+                  <button type="button" id="publishClear" aria-label="Clear publish date">
+                    <i data-lucide="x" aria-hidden="true"></i>
+                  </button>
+                </div>
+              </div>
               <label class="field">
                 <span>Cafe24 product no.</span>
                 <input id="cafe24ProductNo" inputmode="numeric">
@@ -140,17 +210,24 @@
 
           <section class="panel">
             <div class="panel__head">
-              <h2>Blocks</h2>
-              <div class="block-tools" aria-label="Add block">
+              <div>
+                <p class="panel-eyebrow">Blocks</p>
+                <h2>Content structure</h2>
+              </div>
+            </div>
+            <div class="block-tools" aria-label="Add block">
+              <div>
                 <span>Text</span>
-                <button type="button" data-add="text">Text</button>
-                <button type="button" data-add="quote">Quote</button>
-                <button type="button" data-add="credit">Credit</button>
+                <button type="button" data-add="text"><i data-lucide="type" aria-hidden="true"></i>Text</button>
+                <button type="button" data-add="quote"><i data-lucide="quote" aria-hidden="true"></i>Quote</button>
+                <button type="button" data-add="credit"><i data-lucide="badge-info" aria-hidden="true"></i>Credit</button>
+              </div>
+              <div>
                 <span>Media</span>
-                <button type="button" data-add="image">Image</button>
-                <button type="button" data-add="duo">Duo</button>
-                <button type="button" data-add="slide">Slide</button>
-                <button type="button" data-add="video">Video</button>
+                <button type="button" data-add="image"><i data-lucide="image" aria-hidden="true"></i>Image</button>
+                <button type="button" data-add="duo"><i data-lucide="columns-2" aria-hidden="true"></i>Duo</button>
+                <button type="button" data-add="slide"><i data-lucide="gallery-horizontal" aria-hidden="true"></i>Slide</button>
+                <button type="button" data-add="video"><i data-lucide="video" aria-hidden="true"></i>Video</button>
               </div>
             </div>
             <div id="blockList" class="block-list" aria-live="polite"></div>
@@ -158,13 +235,16 @@
 
           <section class="panel export-panel is-collapsed" id="cafeExportPanel">
             <div class="panel__head">
-              <h2>Cafe24 Export</h2>
+              <div>
+                <p class="panel-eyebrow">Cafe24</p>
+                <h2>Export actions</h2>
+              </div>
               <span id="gasState" class="panel-state">Ready</span>
             </div>
             <div class="pipeline-panel">
               <label class="field field--wide">
                 <span>GAS Web App URL</span>
-                <input id="gasEndpoint" placeholder="Local test URL or blank on Netlify">
+                <input id="gasEndpoint" placeholder="Local test URL or blank on Cloudflare Pages">
               </label>
               <label class="field">
                 <span>Access token</span>
@@ -179,10 +259,10 @@
                 <input id="articlePageId" placeholder="아티클 DB page_id">
               </label>
               <div class="pipeline-actions">
-                <button class="plain-button" type="button" data-gas-action="saveEditorData">Save to Notion</button>
-                <button class="plain-button" type="button" data-gas-action="runAll">Run all</button>
-                <button class="plain-button" type="button" data-gas-action="exportRegistrationCsv">Registration CSV</button>
-                <button class="plain-button" type="button" data-gas-action="exportUpdateCsv">Update CSV</button>
+                <button class="ui-button ui-button--secondary" type="button" data-gas-action="saveEditorData"><i data-lucide="database" aria-hidden="true"></i>Save to Notion</button>
+                <button class="ui-button ui-button--secondary" type="button" data-gas-action="runAll"><i data-lucide="play" aria-hidden="true"></i>Run all</button>
+                <button class="ui-button ui-button--secondary" type="button" data-gas-action="exportRegistrationCsv"><i data-lucide="file-plus-2" aria-hidden="true"></i>Registration CSV</button>
+                <button class="ui-button ui-button--secondary" type="button" data-gas-action="exportUpdateCsv"><i data-lucide="file-pen-line" aria-hidden="true"></i>Update CSV</button>
               </div>
             </div>
           </section>
@@ -190,15 +270,21 @@
 
         <section class="preview" aria-label="Preview">
           <div class="preview__toolbar">
-            <div class="segmented segmented--preview" role="group" aria-label="Preview size">
-              <button class="is-active" type="button" data-width="1440">Desktop</button>
-              <button type="button" data-width="834">Tablet</button>
-              <button type="button" data-width="390">Mobile</button>
+            <div>
+              <p class="panel-eyebrow">Preview</p>
+              <strong>Rendered article page</strong>
             </div>
-            <label class="viewport-slider">
-              <span id="viewportLabel">1440px</span>
-              <input id="viewportRange" type="range" min="320" max="1440" value="1440">
-            </label>
+            <div class="preview-controls">
+              <div class="segmented segmented--preview" role="group" aria-label="Preview size">
+                <button class="is-active" type="button" data-width="1440"><i data-lucide="monitor" aria-hidden="true"></i>Desktop</button>
+                <button type="button" data-width="834"><i data-lucide="tablet" aria-hidden="true"></i>Tablet</button>
+                <button type="button" data-width="390"><i data-lucide="smartphone" aria-hidden="true"></i>Mobile</button>
+              </div>
+              <label class="viewport-slider">
+                <span id="viewportLabel">1440px</span>
+                <input id="viewportRange" type="range" min="320" max="1440" value="1440">
+              </label>
+            </div>
           </div>
           <div class="preview__stage">
             <div id="deviceFrame" class="device-frame">
@@ -211,5 +297,10 @@
   </main>
 
   <script src="./app.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) window.lucide.createIcons();
+    });
+  </script>
 </body>
 </html>

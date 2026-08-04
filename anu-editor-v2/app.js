@@ -90,7 +90,9 @@ const els = {
   minimizeComposer: document.getElementById('minimizeComposer'),
   previewFrame: document.getElementById('previewFrame'),
   productCategoryIds: document.getElementById('productCategoryIds'),
+  publishClear: document.getElementById('publishClear'),
   publishDate: document.getElementById('publishDate'),
+  publishToday: document.getElementById('publishToday'),
   saveDraft: document.getElementById('saveDraft'),
   saveState: document.getElementById('saveState'),
   toggleComposerFloat: document.getElementById('toggleComposerFloat'),
@@ -227,6 +229,7 @@ ${rows}
 
 function renderBlockList() {
   els.blockList.innerHTML = state.blocks.map((block, index) => blockEditorHtml(block, index)).join('');
+  refreshIcons();
 }
 
 function blockEditorHtml(block, index) {
@@ -237,16 +240,16 @@ function blockEditorHtml(block, index) {
   return `<article class="block-card${selected}" data-id="${block.id}" data-type="${block.type}">
     <div class="block-card__head">
       <div class="block-card__meta">
-        <button class="drag-handle" type="button" draggable="true" aria-label="Drag block" title="Drag to reorder">↕</button>
+        <button class="drag-handle" type="button" draggable="true" aria-label="Drag block" title="Drag to reorder">${iconHtml('grip-vertical')}</button>
         <strong>${label}</strong>
         <em>${group}</em>
         <span>${String(index + 1).padStart(2, '0')}</span>
       </div>
       <div class="block-actions" aria-label="Block actions">
-        <button type="button" data-block-action="moveUp" aria-label="Move up" title="Move up">↑</button>
-        <button type="button" data-block-action="moveDown" aria-label="Move down" title="Move down">↓</button>
-        <button type="button" data-block-action="duplicate" aria-label="Duplicate" title="Duplicate">⧉</button>
-        <button type="button" data-block-action="delete" aria-label="Delete" title="Delete">×</button>
+        <button type="button" data-block-action="moveUp" aria-label="Move up" title="Move up">${iconHtml('arrow-up')}</button>
+        <button type="button" data-block-action="moveDown" aria-label="Move down" title="Move down">${iconHtml('arrow-down')}</button>
+        <button type="button" data-block-action="duplicate" aria-label="Duplicate" title="Duplicate">${iconHtml('copy')}</button>
+        <button type="button" data-block-action="delete" aria-label="Delete" title="Delete">${iconHtml('trash-2')}</button>
       </div>
     </div>
     <div class="block-card__body">
@@ -259,13 +262,13 @@ function blockEditorHtml(block, index) {
 function inlineAddHtml(index) {
   return `<div class="inline-add" data-insert-after="${index}">
     <span>Add below</span>
-    <button type="button" data-add-inline="text">Text</button>
-    <button type="button" data-add-inline="quote">Quote</button>
-    <button type="button" data-add-inline="credit">Credit</button>
-    <button type="button" data-add-inline="image">Image</button>
-    <button type="button" data-add-inline="duo">Duo</button>
-    <button type="button" data-add-inline="slide">Slide</button>
-    <button type="button" data-add-inline="video">Video</button>
+    <button type="button" data-add-inline="text">${iconHtml('type')}Text</button>
+    <button type="button" data-add-inline="quote">${iconHtml('quote')}Quote</button>
+    <button type="button" data-add-inline="credit">${iconHtml('badge-info')}Credit</button>
+    <button type="button" data-add-inline="image">${iconHtml('image')}Image</button>
+    <button type="button" data-add-inline="duo">${iconHtml('columns-2')}Duo</button>
+    <button type="button" data-add-inline="slide">${iconHtml('gallery-horizontal')}Slide</button>
+    <button type="button" data-add-inline="video">${iconHtml('video')}Video</button>
   </div>`;
 }
 
@@ -576,6 +579,8 @@ function bindEvents() {
   els.importJsonInput.addEventListener('change', importJsonFile);
   els.loadArticles.addEventListener('click', loadArticlesFromNotion);
   els.minimizeComposer.addEventListener('click', () => document.body.classList.toggle('composer-minimized'));
+  els.publishToday.addEventListener('click', () => setPublishDate(new Date()));
+  els.publishClear.addEventListener('click', () => setPublishDate(null));
   els.saveDraft.addEventListener('click', saveDraft);
   els.toggleComposerFloat.addEventListener('click', () => document.body.classList.toggle('composer-floating'));
   els.toggleExport.addEventListener('click', () => {
@@ -611,6 +616,18 @@ function addBlock(type, insertIndex = state.blocks.length) {
   renderBlockList();
   updatePreview();
   markSaved('Editing');
+}
+
+function setPublishDate(date) {
+  els.publishDate.value = date ? formatDateInputValue(date) : '';
+  syncMetaFromInputs();
+}
+
+function formatDateInputValue(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function markDropTarget(card, pointerY) {
@@ -1727,6 +1744,16 @@ function optionHtml(value, selectedValue) {
   return `<option value="${escapeAttr(value)}"${selected}>${escapeHtml(value)}</option>`;
 }
 
+function iconHtml(name) {
+  return `<i data-lucide="${escapeAttr(name)}" aria-hidden="true"></i>`;
+}
+
+function refreshIcons() {
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+}
+
 function escapeHtml(value) {
   return String(value || '')
     .replace(/&/g, '&amp;')
@@ -1744,3 +1771,4 @@ renderBlockList();
 bindEvents();
 loadDraft();
 setViewport(1440);
+refreshIcons();
