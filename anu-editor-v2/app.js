@@ -1,6 +1,12 @@
 const ARTICLE_IMAGE_BASE = 'https://pub-14eaf4c4a9324927bf2879a272de972a.r2.dev';
 const EDITOR_STORAGE_KEY = 'anu-article-editor-v2';
 const TEXT_NODE_TYPES = ['paragraph', 'subheading'];
+const IMAGE_LAYOUTS = ['title-img-f', 'title-img-m', 'img-s', 'img-m', 'img-l'];
+const DUO_LAYOUTS = ['title-img-duo', 'img-s-duo', 'img-m-duo'];
+const TEXT_BLOCK_TYPES = ['text', 'quote', 'credit'];
+const MEDIA_BLOCK_TYPES = ['image', 'duo', 'slide', 'video'];
+let activeRichLink = null;
+let draggedBlockId = '';
 let nextBlockNumber = 4;
 
 const state = {
@@ -103,6 +109,17 @@ ${textChildrenToArticleHtml(block)}
   </div>${captionHtml(block.caption, 'arti-caption--inset')}
 </div>`;
     }
+    if (layout === 'title-img-f') {
+      const mobileSrc = block.mobileSrc || block.src;
+      return `<div class="arti-block arti-block--full" data-reveal>
+  <div class="title-img-f">
+    <picture class="title-img-f__picture">
+      <source media="(min-width: 64rem)" srcset="${escapeAttr(normalizeImageUrl(block.src))}">
+      <img class="title-img-f__mobile" src="${escapeAttr(normalizeImageUrl(mobileSrc))}" alt="">
+    </picture>${captionHtml(block.caption, 'arti-caption--inset')}
+  </div>
+</div>`;
+    }
     if (layout === 'title-img-m') {
       return `<div class="arti-block arti-block--full" data-reveal>
   <div class="title-img-m">
@@ -119,14 +136,19 @@ ${textChildrenToArticleHtml(block)}
   }
 
   if (block.type === 'duo') {
-    const items = (block.items || []).filter(item => item && item.src).map(item => `    <div class="img-m-duo__item">
+    const layout = DUO_LAYOUTS.includes(block.layout) ? block.layout : 'img-m-duo';
+    const itemClass = layout === 'title-img-duo' ? '' : `${layout}__item`;
+    const items = normalizeDuoItems(block.items).filter(item => item && item.src).map(item => layout === 'title-img-duo'
+      ? `    <img src="${escapeAttr(normalizeImageUrl(item.src))}" alt="">`
+      : `    <div class="${escapeAttr(itemClass)}">
       <img src="${escapeAttr(normalizeImageUrl(item.src))}" alt="">${captionHtml(item.caption)}
     </div>`).join('\n');
+    const blockClass = layout === 'title-img-duo' ? 'arti-block--full' : layout === 'img-s-duo' ? 'arti-block--duo-s' : 'arti-block--duo-m';
 
-    return `<div class="arti-block arti-block--duo-m" data-reveal>
-  <div class="img-m-duo">
+    return `<div class="arti-block ${blockClass}" data-reveal>
+  <div class="${escapeAttr(layout)}">
 ${items}
-  </div>
+  </div>${layout === 'title-img-duo' ? captionHtml(block.caption, 'arti-caption--inset') : ''}
 </div>`;
   }
 
@@ -159,7 +181,7 @@ ${items}
     const media = videoEmbedHtml(block.url);
     if (!media) return '';
     return `<div class="arti-block arti-block--wide" data-reveal>
-  <div class="arti-video">
+  <div class="arti-video ${escapeAttr(block.videoType || '')}">
     ${media}
   </div>${captionHtml(block.caption)}
 </div>`;
@@ -189,25 +211,55 @@ function renderBlockList() {
 
 function blockEditorHtml(block, index) {
   const selected = block.id === state.selectedBlockId ? ' is-selected' : '';
-  const label = block.type.charAt(0).toUpperCase() + block.type.slice(1);
+  const label = blockLabel(block);
+  const group = TEXT_BLOCK_TYPES.includes(block.type) ? 'Text' : MEDIA_BLOCK_TYPES.includes(block.type) ? 'Media' : 'Block';
 
   return `<article class="block-card${selected}" data-id="${block.id}" data-type="${block.type}">
     <div class="block-card__head">
       <div class="block-card__meta">
+        <button class="drag-handle" type="button" draggable="true" aria-label="Drag block" title="Drag to reorder">↕</button>
         <strong>${label}</strong>
+        <em>${group}</em>
         <span>${String(index + 1).padStart(2, '0')}</span>
       </div>
       <div class="block-actions" aria-label="Block actions">
-        <button type="button" data-block-action="moveUp">Up</button>
-        <button type="button" data-block-action="moveDown">Down</button>
-        <button type="button" data-block-action="duplicate">Copy</button>
-        <button type="button" data-block-action="delete">Delete</button>
+        <button type="button" data-block-action="moveUp" aria-label="Move up" title="Move up">↑</button>
+        <button type="button" data-block-action="moveDown" aria-label="Move down" title="Move down">↓</button>
+        <button type="button" data-block-action="duplicate" aria-label="Duplicate" title="Duplicate">⧉</button>
+        <button type="button" data-block-action="delete" aria-label="Delete" title="Delete">×</button>
       </div>
     </div>
     <div class="block-card__body">
       ${blockFieldsHtml(block)}
     </div>
-  </article>`;
+  </article>
+  ${inlineAddHtml(index)}`;
+}
+
+function inlineAddHtml(index) {
+  return `<div class="inline-add" data-insert-after="${index}">
+    <span>Add below</span>
+    <button type="button" data-add-inline="text">Text</button>
+    <button type="button" data-add-inline="quote">Quote</button>
+    <button type="button" data-add-inline="credit">Credit</button>
+    <button type="button" data-add-inline="image">Image</button>
+    <button type="button" data-add-inline="duo">Duo</button>
+    <button type="button" data-add-inline="slide">Slide</button>
+    <button type="button" data-add-inline="video">Video</button>
+  </div>`;
+}
+
+function blockLabel(block) {
+  const labels = {
+    text: 'Text',
+    quote: 'Quote',
+    credit: 'Credit',
+    image: block.layout || 'Image',
+    duo: block.layout || 'Duo',
+    slide: 'Slide',
+    video: block.videoType || 'Video',
+  };
+  return labels[block.type] || block.type.charAt(0).toUpperCase() + block.type.slice(1);
 }
 
 function blockFieldsHtml(block) {
@@ -239,11 +291,12 @@ function blockFieldsHtml(block) {
         <label class="field">
           <span>Layout class</span>
           <select data-key="layout">
-            ${optionHtml('img-m', block.layout)}
-            ${optionHtml('img-l', block.layout)}
-            ${optionHtml('img-s', block.layout)}
-            ${optionHtml('title-img-m', block.layout)}
+            ${IMAGE_LAYOUTS.map(value => optionHtml(value, block.layout)).join('')}
           </select>
+        </label>
+        <label class="field">
+          <span>Mobile image path</span>
+          <input data-key="mobileSrc" value="${escapeAttr(block.mobileSrc)}" placeholder="title-img-f에서 사용">
         </label>
         <label class="field">
           <span>Caption</span>
@@ -264,6 +317,12 @@ function blockFieldsHtml(block) {
     const items = normalizeDuoItems(block.items);
     block.items = items;
     return `<div class="duo-editor">
+      <label class="field">
+        <span>Duo layout</span>
+        <select data-key="layout">
+          ${DUO_LAYOUTS.map(value => optionHtml(value, block.layout || 'img-m-duo')).join('')}
+        </select>
+      </label>
       ${items.map((item, index) => {
         const imageUrl = normalizeImageUrl(item.src);
         return `<div class="duo-editor__item" data-duo-index="${index}">
@@ -287,6 +346,10 @@ function blockFieldsHtml(block) {
           </div>
         </div>`;
       }).join('')}
+      <label class="field">
+        <span>Shared caption</span>
+        <input data-key="caption" value="${escapeAttr(block.caption)}" placeholder="title-img-duo에서 사용">
+      </label>
     </div>`;
   }
 
@@ -303,6 +366,13 @@ function blockFieldsHtml(block) {
 
   if (block.type === 'video') {
     return `<label class="field">
+      <span>Video type</span>
+      <select data-key="videoType">
+        ${optionHtml('video-yt', block.videoType || 'video-yt')}
+        ${optionHtml('video-mp4', block.videoType || 'video-yt')}
+      </select>
+    </label>
+    <label class="field">
       <span>YouTube or MP4 URL</span>
       <input data-key="url" value="${escapeAttr(block.url)}">
     </label>
@@ -339,6 +409,14 @@ function bindEvents() {
   });
 
   els.blockList.addEventListener('click', event => {
+    const inlineAddButton = event.target.closest('[data-add-inline]');
+    if (inlineAddButton) {
+      const inlineAdd = inlineAddButton.closest('[data-insert-after]');
+      const afterIndex = Number(inlineAdd?.dataset.insertAfter);
+      addBlock(inlineAddButton.dataset.addInline, Number.isFinite(afterIndex) ? afterIndex + 1 : state.blocks.length);
+      return;
+    }
+
     const richButton = event.target.closest('[data-rich-action]');
     if (richButton) {
       const card = richButton.closest('.block-card');
@@ -360,6 +438,37 @@ function bindEvents() {
     const card = button.closest('.block-card');
     if (!card) return;
     handleBlockAction(card.dataset.id, button.dataset.blockAction);
+  });
+
+  els.blockList.addEventListener('dragstart', event => {
+    if (!event.target.closest('.drag-handle')) return;
+    const card = event.target.closest('.block-card');
+    if (!card) return;
+    draggedBlockId = card.dataset.id;
+    card.classList.add('is-dragging');
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', draggedBlockId);
+  });
+
+  els.blockList.addEventListener('dragend', () => {
+    draggedBlockId = '';
+    document.querySelectorAll('.block-card').forEach(card => card.classList.remove('is-dragging', 'is-drop-before', 'is-drop-after'));
+  });
+
+  els.blockList.addEventListener('dragover', event => {
+    const card = event.target.closest('.block-card');
+    if (!card || !draggedBlockId || card.dataset.id === draggedBlockId) return;
+    event.preventDefault();
+    markDropTarget(card, event.clientY);
+  });
+
+  els.blockList.addEventListener('drop', event => {
+    const card = event.target.closest('.block-card');
+    if (!card || !draggedBlockId || card.dataset.id === draggedBlockId) return;
+    event.preventDefault();
+    const rect = card.getBoundingClientRect();
+    const insertAfter = event.clientY > rect.top + rect.height / 2;
+    reorderBlock(draggedBlockId, card.dataset.id, insertAfter);
   });
 
   els.blockList.addEventListener('input', event => {
@@ -395,6 +504,22 @@ function bindEvents() {
     const uploadInput = event.target.closest('[data-upload-target]');
     if (!uploadInput) return;
     handleImageUpload(uploadInput);
+  });
+
+  els.blockList.addEventListener('mouseover', event => {
+    const link = event.target.closest('.rich-editor a[data-link-type]');
+    if (!link) return;
+    showLinkPopover(link);
+  });
+
+  document.addEventListener('click', event => {
+    const popover = document.querySelector('.link-popover');
+    if (event.target.closest('.link-popover')) {
+      const action = event.target.closest('[data-link-popover-action]')?.dataset.linkPopoverAction;
+      if (action) handleLinkPopoverAction(action);
+      return;
+    }
+    if (!event.target.closest('.rich-editor a[data-link-type]')) hideLinkPopover();
   });
 
   els.blockList.addEventListener('paste', event => {
@@ -445,10 +570,33 @@ function bindEvents() {
   });
 }
 
-function addBlock(type) {
+function addBlock(type, insertIndex = state.blocks.length) {
   const block = createBlock(type);
-  state.blocks.push(block);
+  state.blocks.splice(insertIndex, 0, block);
   state.selectedBlockId = block.id;
+  renderBlockList();
+  updatePreview();
+  markSaved('Editing');
+}
+
+function markDropTarget(card, pointerY) {
+  document.querySelectorAll('.block-card').forEach(item => item.classList.remove('is-drop-before', 'is-drop-after'));
+  const rect = card.getBoundingClientRect();
+  const insertAfter = pointerY > rect.top + rect.height / 2;
+  card.classList.toggle('is-drop-before', !insertAfter);
+  card.classList.toggle('is-drop-after', insertAfter);
+}
+
+function reorderBlock(sourceId, targetId, insertAfter) {
+  const sourceIndex = state.blocks.findIndex(item => item.id === sourceId);
+  const targetIndex = state.blocks.findIndex(item => item.id === targetId);
+  if (sourceIndex === -1 || targetIndex === -1) return;
+
+  const [movedBlock] = state.blocks.splice(sourceIndex, 1);
+  let nextIndex = state.blocks.findIndex(item => item.id === targetId);
+  if (insertAfter) nextIndex += 1;
+  state.blocks.splice(nextIndex, 0, movedBlock);
+  state.selectedBlockId = sourceId;
   renderBlockList();
   updatePreview();
   markSaved('Editing');
@@ -612,13 +760,17 @@ function handleRichAction(blockId, action) {
       }, href);
     }
   } else if (action === 'productLink') {
-    const productCode = window.prompt('상품코드 또는 상품번호를 입력하세요.', '');
-    if (productCode) {
+    const productUrl = window.prompt('상품 URL을 입력하세요.', 'https://anu-seoul.com/product/');
+    if (productUrl) {
+      const productNo = parseProductNo(productUrl);
       insertInlineLink(editor, {
-        href: '#',
+        href: productUrl,
+        target: '_blank',
+        rel: 'noopener',
         'data-link-type': 'product',
-        'data-product-code': productCode,
-      }, productCode);
+        'data-product-url': productUrl,
+        'data-product-no': productNo,
+      }, productUrl);
     }
   } else if (action === 'popupLink') {
     const title = window.prompt('팝업 제목을 입력하세요.', '');
@@ -634,6 +786,98 @@ function handleRichAction(blockId, action) {
   }
 
   ensureRichNodeStructure(editor);
+  block.children = serializeTextEditor(editor);
+  updatePreview();
+  markSaved('Editing');
+}
+
+function showLinkPopover(link) {
+  activeRichLink = link;
+  const popover = getLinkPopover();
+  const rect = link.getBoundingClientRect();
+  const label = link.dataset.linkType === 'product' ? 'Product link' : link.dataset.linkType === 'popup' ? 'Popup link' : 'External link';
+  popover.querySelector('[data-link-popover-label]').textContent = label;
+  popover.style.left = `${Math.min(window.innerWidth - 220, Math.max(12, rect.left))}px`;
+  popover.style.top = `${Math.max(12, rect.top - 42)}px`;
+  popover.hidden = false;
+}
+
+function hideLinkPopover() {
+  const popover = document.querySelector('.link-popover');
+  if (popover) popover.hidden = true;
+  activeRichLink = null;
+}
+
+function getLinkPopover() {
+  let popover = document.querySelector('.link-popover');
+  if (popover) return popover;
+  popover = document.createElement('div');
+  popover.className = 'link-popover';
+  popover.hidden = true;
+  popover.innerHTML = `<span data-link-popover-label>Link</span>
+    <button type="button" data-link-popover-action="edit">Edit</button>
+    <button type="button" data-link-popover-action="open">Open</button>
+    <button type="button" data-link-popover-action="remove">Remove</button>`;
+  document.body.appendChild(popover);
+  return popover;
+}
+
+function handleLinkPopoverAction(action) {
+  if (!activeRichLink) return;
+  const link = activeRichLink;
+  const card = link.closest('.block-card');
+  if (action === 'edit') {
+    editRichLink(link);
+  } else if (action === 'open') {
+    const href = link.getAttribute('href');
+    if (href && href !== '#') window.open(href, '_blank', 'noopener');
+  } else if (action === 'remove') {
+    unwrapElement(link);
+  }
+
+  syncRichEditorCard(card);
+  hideLinkPopover();
+}
+
+function editRichLink(link) {
+  const type = link.dataset.linkType || 'external';
+  if (type === 'product') {
+    const productUrl = window.prompt('상품 URL을 수정하세요.', link.dataset.productUrl || link.getAttribute('href') || 'https://anu-seoul.com/product/');
+    if (!productUrl) return;
+    link.setAttribute('href', productUrl);
+    link.setAttribute('target', '_blank');
+    link.setAttribute('rel', 'noopener');
+    link.dataset.productUrl = productUrl;
+    const productNo = parseProductNo(productUrl);
+    if (productNo) link.dataset.productNo = productNo;
+    return;
+  }
+
+  if (type === 'popup') {
+    const title = window.prompt('팝업 제목을 수정하세요.', link.dataset.popupTitle || link.textContent.trim());
+    if (!title) return;
+    const content = window.prompt('팝업 내용을 수정하세요.', link.dataset.popupContent || '');
+    link.dataset.popupTitle = title;
+    link.dataset.popupContent = content || '';
+    return;
+  }
+
+  const href = window.prompt('외부 링크 URL을 수정하세요.', link.getAttribute('href') || 'https://');
+  if (!href) return;
+  link.setAttribute('href', href);
+  link.setAttribute('target', '_blank');
+  link.setAttribute('rel', 'noopener');
+}
+
+function syncRichLinkBlock(link) {
+  const card = link.closest?.('.block-card');
+  syncRichEditorCard(card);
+}
+
+function syncRichEditorCard(card) {
+  const editor = card?.querySelector('.rich-editor');
+  const block = state.blocks.find(item => item.id === card?.dataset.id);
+  if (!editor || !block) return;
   block.children = serializeTextEditor(editor);
   updatePreview();
   markSaved('Editing');
@@ -721,7 +965,7 @@ function normalizeTextChildren(children) {
 function textChildrenToArticleHtml(block) {
   const children = normalizeTextBlock(block).children;
   return children.map(child => {
-    const html = sanitizeRichHtml(child.html);
+    const html = richHtmlToArticleInlineHtml(child.html);
     if (!html) return '';
     if (child.type === 'subheading') {
       return `  <h2 class="mid-title">${html}</h2>`;
@@ -794,6 +1038,7 @@ function createBlock(type) {
       type,
       layout: 'img-m',
       src: `/2026/${codeSlug}/image-01.jpg`,
+      mobileSrc: '',
       caption: '',
     };
   }
@@ -803,10 +1048,12 @@ function createBlock(type) {
     return {
       id,
       type,
+      layout: 'img-m-duo',
       items: [
         { src: `/2026/${codeSlug}/duo-01.jpg`, caption: '' },
         { src: `/2026/${codeSlug}/duo-02.jpg`, caption: '' },
       ],
+      caption: '',
     };
   }
 
@@ -824,6 +1071,7 @@ function createBlock(type) {
     return {
       id,
       type,
+      videoType: 'video-yt',
       url: '',
       caption: '',
     };
@@ -1169,6 +1417,47 @@ function sanitizeRichHtml(value) {
   return template.innerHTML.trim();
 }
 
+function richHtmlToArticleInlineHtml(value) {
+  const template = document.createElement('template');
+  template.innerHTML = sanitizeRichHtml(value);
+  template.content.querySelectorAll('a[data-link-type]').forEach(link => {
+    const type = link.dataset.linkType;
+    if (type === 'product') {
+      link.className = 'arti-product-link';
+      link.href = link.dataset.productUrl || link.getAttribute('href') || '#';
+      link.target = '_blank';
+      link.rel = 'noopener';
+      return;
+    }
+
+    if (type === 'external') {
+      link.className = 'arti-ext-link';
+      link.target = '_blank';
+      link.rel = 'noopener';
+      return;
+    }
+
+    if (type === 'popup') {
+      const trigger = document.createElement('span');
+      trigger.className = 'arti-note-trigger';
+      trigger.textContent = link.textContent;
+
+      const popup = document.createElement('span');
+      popup.className = 'arti-note-popup';
+
+      const title = document.createElement('span');
+      title.className = 'popup-title';
+      title.textContent = link.dataset.popupTitle || link.textContent;
+
+      popup.appendChild(title);
+      popup.appendChild(document.createTextNode(link.dataset.popupContent || ''));
+      trigger.appendChild(popup);
+      link.replaceWith(trigger);
+    }
+  });
+  return template.innerHTML.trim();
+}
+
 function cleanRichNode(parent) {
   Array.from(parent.childNodes).forEach(node => {
     if (node.nodeType === Node.TEXT_NODE) return;
@@ -1197,7 +1486,7 @@ function cleanRichNode(parent) {
       const href = element.getAttribute('href') || '#';
       allowedAttributes.set('href', safeHref(href) ? href : '#');
 
-      ['target', 'rel', 'data-link-type', 'data-product-code', 'data-product-no', 'data-popup-title', 'data-popup-content'].forEach(name => {
+      ['target', 'rel', 'data-link-type', 'data-product-code', 'data-product-no', 'data-product-url', 'data-popup-title', 'data-popup-content'].forEach(name => {
         const value = element.getAttribute(name);
         if (value) allowedAttributes.set(name, value);
       });
@@ -1230,6 +1519,14 @@ function safeHref(href) {
   } catch (error) {
     return false;
   }
+}
+
+function parseProductNo(value) {
+  const text = String(value || '');
+  return text.match(/\/product\/(?:[^/]+\/)?(\d+)(?:\/|\?|#|$)/)?.[1]
+    || text.match(/[?&](?:product_no|productNo|no)=(\d+)/)?.[1]
+    || text.match(/상품:(\d+)/)?.[1]
+    || '';
 }
 
 function lineBreaks(value) {
