@@ -1,0 +1,2917 @@
+/*한글제목 강제 상단 여백 조정*/
+.product-title-kr {
+    margin-top: -4px;
+}
+
+/* ============================================================
+   ARTI-BODY SYSTEM
+   anu-seoul.com / article/read-new.css 에 추가
+
+   의존성: style.css의 폰트 토큰, 스페이싱 토큰 사용
+   ============================================================ */
+
+
+/* ── 1. 부모 컨테이너 ──────────────────────────────────────── */
+
+.arti-body {
+    width: 100%;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 44px;
+}
+
+@media (min-width: 64rem) {
+    .arti-body {
+        gap: 64px;
+    }
+}
+
+
+/* ── 2. 블록 기본 단위 ─────────────────────────────────────── */
+/*
+  모바일: padding-inline 없음 — 웹 기본 레이아웃 여백을 그대로 사용.
+          max-width 제한도 없음 → 레이아웃 여백 안에서 100%.
+  PC:     narrow / wide 모디파이어로 padding + max-width 제어.
+  full:   모바일·PC 모두 padding 0, 100vw로 풀블리드.
+*/
+
+.arti-block {
+    width: 100%;
+    box-sizing: border-box;
+    padding-inline: 0;
+    /* 모바일: 패딩 없음 (기본 레이아웃 여백 사용) */
+}
+
+@media (min-width: 64rem) {
+    .arti-block {
+        padding-inline: 44px;
+        /* PC: 블록 자체 패딩 적용 */
+    }
+}
+
+/* narrow: 본문 텍스트, 소형 이미지 (PC 콘텐츠 max 650px) */
+@media (min-width: 64rem) {
+    .arti-block--narrow {
+        max-width: calc(650px + 88px);
+        /* 650 + 패딩 44*2 */
+        margin-inline: auto;
+    }
+}
+
+/* wide: 강조문단, 중형 이미지 단일, 슬라이드, 비디오 (PC 콘텐츠 max 970px) */
+@media (min-width: 64rem) {
+    .arti-block--wide {
+        max-width: calc(970px + 88px);
+        /* 970 + 패딩 44*2 */
+        margin-inline: auto;
+    }
+}
+
+/*
+  duo-s: img-s-duo 전용 컨테이너
+  이미지 2장 각 max 475px + 간격 20px = 970px
+  PC: max-width 970px + 패딩 44*2
+*/
+@media (min-width: 64rem) {
+    .arti-block--duo-s {
+        max-width: calc(970px + 88px);
+        margin-inline: auto;
+    }
+}
+
+/*
+  duo-m: img-m-duo 전용 컨테이너
+  이미지 2장 각 max 765px + 간격 20px = 1550px
+  PC: max-width 1550px + 패딩 44*2
+*/
+@media (min-width: 64rem) {
+    .arti-block--duo-m {
+        max-width: calc(1550px + 88px);
+        margin-inline: auto;
+    }
+}
+
+/*
+  full: 풀블리드.
+  100vw + 네거티브 마진으로 상위 래퍼 돌파.
+  모바일·PC 모두 padding-inline: 0.
+*/
+.arti-block--full {
+    padding-inline: 0;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    max-width: none;
+}
+
+
+/* ── 3. 문단 (Paragraph) ───────────────────────────────────── */
+
+.basic-p {
+    font-family: var(--font-pretendard);
+    font-size: var(--text-body2-kr);
+    line-height: var(--text-body2-kr--line-height);
+    font-weight: var(--text-body2-kr--font-weight);
+    word-break: keep-all;
+    overflow-wrap: break-word;
+}
+
+@media (min-width: 64rem) {
+    .basic-p {
+        font-size: var(--text-article-body1-kr);
+        line-height: var(--text-article-body1-kr--line-height);
+        font-weight: var(--text-article-body1-kr--font-weight);
+    }
+}
+
+/* 강조 문단 */
+.emph-p {
+    font-family: var(--font-pretendard);
+    font-size: var(--text-headline1-kr);
+    line-height: var(--text-headline1-kr--line-height);
+    font-weight: var(--text-headline1-kr--font-weight);
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    text-align: center;
+}
+
+@media (min-width: 64rem) {
+    .emph-p {
+        font-size: var(--text-article-emph1-kr);
+        line-height: var(--text-article-emph1-kr--line-height);
+        font-weight: var(--text-article-emph1-kr--font-weight);
+    }
+}
+
+
+/* ── 4. 문단 내 인라인 서식 ────────────────────────────────── */
+
+/* 소제목 */
+.arti-h {
+    font-size: var(--text-headline2-kr);
+    line-height: var(--text-headline2-kr--line-height);
+    font-family: var(--font-pretendard);
+    font-weight: var(--text-headline2-kr--font-weight);
+    display: block;
+    margin-bottom: 0.5em;
+}
+
+@media (min-width: 64rem) {
+    .arti-h {
+        font-size: var(--text-heading2-kr);
+        line-height: var(--text-heading2-kr--line-height);
+    }
+}
+
+/* 밑줄 */
+.arti-u {
+    text-decoration: underline;
+    text-underline-offset: var(--text-underline-offset-default, 13%);
+}
+
+/* 제품 링크 */
+.arti-product-link {
+    text-decoration: underline;
+    text-underline-offset: var(--text-underline-offset-default, 13%);
+    color: var(--color-neutral-70);
+    cursor: pointer;
+}
+
+.arti-product-link:hover {
+    color: var(--color-label-assistive);
+    text-decoration-color: var(--color-label-assistive);
+}
+
+.arti-product-link::after {
+    content: '';
+    /* 필수 */
+    display: inline-block;
+    width: 14px;
+    /* 아이콘 사이즈 */
+    height: 14px;
+    /* 아이콘 사이즈 */
+
+    /* [핵심 수정] 글자 상단 정렬을 위한 속성 */
+    vertical-align: text-top;
+    /* 글자 중앙에 맞춤 */
+
+    /* 아이콘과 앞 글자 사이의 간격 (flex의 gap 대신 margin 사용) */
+    margin-left: 1px;
+    margin-right: 2px;
+
+    /* [상단 미세 조정] 본문 폰트 크기에 따라 아이콘이 너무 바짝 붙어있으면 살짝 내려줍니다 */
+    margin-top: 1px;
+
+    /* [핵심] SVG를 마스크로 처리하여 컬러 적용 */
+    background-color: var(--color-neutral-70);
+    /* 여기에 지정한 색상이 아이콘 색상이 됨 */
+    -webkit-mask-image: url('/futiful/icons/article-productlink.svg');
+    /* SVG 파일 경로 */
+    mask-image: url('/futiful/icons/article-productlink.svg');
+
+    /* 마스크 이미지 설정 */
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+
+}
+
+@media (max-width: 1023px) {
+    .arti-product-link::after {
+        /* 모바일에서는 아이콘을 조금 더 작게 조정 */
+        margin-left: 2px;
+        width: 10px;
+        height: 10px;
+        margin-top: 2px;
+    }
+}
+
+.arti-product-link:hover::after {
+    background-color: var(--color-label-assistive);
+}
+
+/* 외부 링크 */
+.arti-ext-link {
+    text-decoration: underline;
+    text-underline-offset: var(--text-underline-offset-default, 13%);
+    color: var(--color-neutral-70);
+}
+
+.arti-ext-link:hover {
+    color: var(--color-label-assistive);
+    text-decoration-color: var(--color-label-assistive);
+}
+
+.arti-ext-link::after {
+    content: '';
+    /* 필수 */
+    display: inline-block;
+    width: 14px;
+    /* 아이콘 사이즈 */
+    height: 14px;
+    /* 아이콘 사이즈 */
+
+    /* [핵심 수정] 글자 상단 정렬을 위한 속성 */
+    vertical-align: text-top;
+    /* 글자 중앙에 맞춤 */
+
+    /* 아이콘과 앞 글자 사이의 간격 (flex의 gap 대신 margin 사용) */
+    margin-left: 1px;
+    margin-right: 2px;
+
+    /* [상단 미세 조정] 본문 폰트 크기에 따라 아이콘이 너무 바짝 붙어있으면 살짝 내려줍니다 */
+    margin-top: 1px;
+
+    /* [핵심] SVG를 마스크로 처리하여 컬러 적용 */
+    background-color: var(--color-neutral-70);
+    /* 여기에 지정한 색상이 아이콘 색상이 됨 */
+    -webkit-mask-image: url('/futiful/icons/article-outlink.svg');
+    /* SVG 파일 경로 */
+    mask-image: url('/futiful/icons/article-outlink.svg');
+
+    /* 마스크 이미지 설정 */
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+
+}
+
+@media (max-width: 1023px) {
+    .arti-ext-link::after {
+        /* 모바일에서는 아이콘을 조금 더 작게 조정 */
+        margin-left: 2px;
+        width: 10px;
+        height: 10px;
+        margin-top: 2px;
+    }
+}
+
+.arti-ext-link:hover::after {
+    background-color: var(--color-label-assistive);
+}
+
+/* 주석 트리거 */
+.arti-note-trigger {
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: var(--text-underline-offset-default, 13%);
+    color: var(--color-neutral-70);
+    display: inline;
+    position: relative;
+    white-space: nowrap;
+}
+
+.arti-note-trigger:hover {
+    color: var(--color-label-assistive);
+    text-decoration-color: var(--color-label-assistive);
+}
+
+/* 주석 아이콘 (새로 추가) */
+.arti-note-trigger::after {
+    content: '';
+    /* 필수 */
+    display: inline-block;
+    width: 14px;
+    /* 아이콘 사이즈 */
+    height: 14px;
+    /* 아이콘 사이즈 */
+
+    /* [핵심 수정] 글자 상단 정렬을 위한 속성 */
+    vertical-align: text-top;
+    /* 글자 중앙에 맞춤 */
+
+    /* 아이콘과 앞 글자 사이의 간격 (flex의 gap 대신 margin 사용) */
+    margin-left: 1px;
+    margin-right: 2px;
+
+    /* [상단 미세 조정] 본문 폰트 크기에 따라 아이콘이 너무 바짝 붙어있으면 살짝 내려줍니다 */
+    margin-top: 1px;
+
+    /* [핵심] SVG를 마스크로 처리하여 컬러 적용 */
+    background-color: var(--color-neutral-70);
+    /* 여기에 지정한 색상이 아이콘 색상이 됨 */
+    -webkit-mask-image: url('/futiful/icons/article-annotation.svg');
+    /* SVG 파일 경로 */
+    mask-image: url('/futiful/icons/article-annotation.svg');
+
+    /* 마스크 이미지 설정 */
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+
+}
+
+@media (max-width: 1023px) {
+    .arti-note-trigger::after {
+        /* 모바일에서는 아이콘을 조금 더 작게 조정 */
+        margin-left: 2px;
+        width: 10px;
+        height: 10px;
+        margin-top: 2px;
+    }
+}
+
+.arti-note-trigger:hover::after {
+    background-color: var(--color-label-assistive);
+}
+
+/* 주석 팝업 */
+.arti-note-popup {
+    /* [변경] 애니메이션을 위해 투명도와 숨김 처리 */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    /* 숨겨져 있을 때 마우스 클릭/호버 방지 */
+
+    /* [추가] 처음엔 살짝 아래(4px)에 위치하도록 설정 */
+    transform: translateY(4px);
+
+    /* transform 속성도 부드럽게 변하도록 transition에 추가 */
+    transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    z-index: 20;
+    background: var(--color-popupgray);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px) !important;
+    box-shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.25);
+    border-radius: 16px;
+    padding: 20px;
+    font-size: var(--text-label1-kr);
+    line-height: var(--text-label1-kr--line-height);
+    font-weight: var(--text-label1-kr--font-weight);
+    color: var(--color-white);
+    white-space: normal;
+    min-width: 360px;
+    max-width: 400px;
+    word-break: keep-all;
+}
+
+.arti-note-popup .popup-title {
+    display: block;
+    /* 한 줄을 다 차지하게 해서 줄바꿈 처리 */
+    font-size: var(--text-article-body1-kr);
+    /* 기존 팝업 글씨보다 약간 더 크게 (원하는 크기로 조절 가능) */
+    line-height: var(--text-article-body1-kr--line-height);
+    font-weight: var(--text-article-body1-kr--font-weight);
+    color: var(--color-white);
+    /* 본문보다 더 진한 색상으로 강조 */
+    margin-bottom: 8px;
+    /* 제목과 아래 설명 사이의 간격 */
+}
+
+.arti-note-popup .popup-title::before {
+    content: '';
+    /* 필수 */
+    display: inline-block;
+    width: 20px;
+    /* 아이콘 사이즈 */
+    height: 20px;
+    /* 아이콘 사이즈 */
+
+    /* [핵심 수정] 글자 상단 정렬을 위한 속성 */
+    vertical-align: middle;
+    /* 글자 중앙에 맞춤 */
+
+    /* 아이콘과 앞 글자 사이의 간격 (flex의 gap 대신 margin 사용) */
+    margin-left: 0px;
+    margin-right: 6px;
+
+    /* [상단 미세 조정] 본문 폰트 크기에 따라 아이콘이 너무 바짝 붙어있으면 살짝 내려줍니다 */
+    margin-top: 0px;
+
+    /* [핵심] SVG를 마스크로 처리하여 컬러 적용 */
+    background-color: var(--color-white);
+    /* 여기에 지정한 색상이 아이콘 색상이 됨 */
+    -webkit-mask-image: url('/futiful/icons/article-annotation.svg');
+    /* SVG 파일 경로 */
+    mask-image: url('/futiful/icons/article-annotation.svg');
+
+    /* 마스크 이미지 설정 */
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+}
+
+.arti-note-trigger.open .arti-note-popup {
+    /* [변경] 페이드인 상태로 전환 */
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    /* 나타나면 다시 마우스 반응하도록 설정 */
+    transform: translateY(0);
+    /* 원래 위치로 이동 */
+}
+
+@media (max-width: 1023px) {
+
+    /* 1. 기본 팝업 상태 (숨겨진 상태) */
+    .arti-note-popup {
+        /* [중요] 열리기 전부터 화면 고정(fixed) 위치를 잡아둡니다 */
+        position: fixed;
+        top: auto;
+        bottom: 20px;
+        /* 화면 하단 여백 */
+        left: 50%;
+
+        /* [핵심] 가로 중앙 정렬은 유지하되, 원래 위치보다 15px 아래(translateY)에 배치 */
+        transform: translate(-50%, calc(100vh + 100%));
+
+        /* 화면 너비 맞춤 */
+        width: calc(100% - 32px);
+        max-width: 360px;
+        min-width: 0;
+        z-index: 9999;
+
+        /* 트랜지션 대상에 transform과 opacity를 확실히 지정 */
+        transition:
+            opacity 0.65s ease,
+            visibility 0.65s ease,
+            transform 0.78s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* 2. 팝업이 열린 상태 (.open) */
+    .arti-note-trigger.open .arti-note-popup {
+        /* [중요] PC용 absolute 속성이 침범하지 못하도록 fixed로 고정 */
+        position: fixed;
+        top: auto;
+        bottom: 20px;
+        left: 50%;
+
+        /* [핵심] 투명도가 커지면서 원래 위치(translateY: 0)로 부드럽게 올라옴 */
+        transform: translate(-50%, var(--note-drag-y, 0px));
+
+        opacity: var(--note-drag-opacity, 1);
+        visibility: visible;
+        pointer-events: auto;
+    }
+
+    .arti-note-popup.is-dragging {
+        transition: none;
+    }
+}
+
+/* 토글 */
+.arti-toggle {
+    border-bottom: 1px solid var(--color-black);
+}
+
+.arti-toggle summary {
+    font-family: var(--font-pretendard);
+    font-size: var(--text-label1-kr);
+    line-height: var(--text-label1-kr--line-height);
+    font-weight: var(--text-label1-kr--font-weight);
+    padding-block: 12px;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.arti-toggle summary::-webkit-details-marker {
+    display: none;
+}
+
+.arti-toggle summary::after {
+    content: "+";
+    flex-shrink: 0;
+}
+
+.arti-toggle[open] summary::after {
+    content: "−";
+}
+
+@media (min-width: 64rem) {
+    .arti-toggle summary {
+        font-size: var(--text-body1-kr);
+        line-height: var(--text-body1-kr--line-height);
+    }
+}
+
+.arti-toggle .arti-toggle-content {
+    font-family: var(--font-pretendard);
+    font-size: var(--text-label1-kr);
+    line-height: var(--text-label1-kr--line-height);
+    font-weight: var(--text-label1-kr--font-weight);
+    padding-top: 4px;
+    padding-bottom: 20px;
+}
+
+@media (min-width: 64rem) {
+    .arti-toggle .arti-toggle-content {
+        font-size: var(--text-body1-kr);
+        line-height: var(--text-body1-kr--line-height);
+    }
+}
+
+/* 표 */
+.arti-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-pretendard);
+    font-size: var(--text-label1-kr);
+    line-height: var(--text-label1-kr--line-height);
+    font-weight: var(--text-label1-kr--font-weight);
+}
+
+@media (min-width: 64rem) {
+    .arti-table {
+        font-size: var(--text-body1-kr);
+        line-height: var(--text-body1-kr--line-height);
+    }
+}
+
+.arti-table th,
+.arti-table td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-black);
+    vertical-align: top;
+}
+
+.arti-table thead th {
+    font-weight: var(--font-weight-bold);
+    border-bottom: 1.5px solid var(--color-black);
+}
+
+.arti-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+
+/* ── 5. 캡션 공통 ──────────────────────────────────────────── */
+
+.arti-caption {
+    font-family: var(--font-pretendard);
+    color: var(--color-label-alternative);
+    margin-top: 10px;
+    font-size: var(--text-caption1-kr);
+    line-height: var(--text-caption1-kr--line-height);
+    font-weight: var(--text-caption1-kr--font-weight);
+    /* 패딩 없음 — 블록의 패딩을 그대로 사용 */
+}
+
+@media (min-width: 64rem) {
+    .arti-caption {
+        font-size: var(--text-label1-kr);
+        line-height: var(--text-label1-kr--line-height);
+        font-weight: var(--text-label1-kr--font-weight);
+    }
+}
+
+/* 캡션 내 인라인 서식 — 캡션 색상에 묻히지 않도록 명시적으로 선언 */
+.arti-caption .arti-note-trigger {
+    color: inherit;
+    border-bottom: 1px dashed currentColor;
+    opacity: 0.7;
+}
+
+.arti-caption .arti-product-link,
+.arti-caption .arti-ext-link {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: var(--text-underline-offset-default, 13%);
+    opacity: 0.7;
+}
+
+.arti-caption .arti-product-link:hover,
+.arti-caption .arti-ext-link:hover,
+.arti-caption .arti-note-trigger:hover {
+    opacity: 1;
+}
+
+/*
+  풀블리드 블록(.arti-block--full) 안 캡션 전용.
+  블록 자체 패딩이 0이므로, 캡션에 직접 여백 부여.
+  모바일: 기본 레이아웃 여백과 맞추기 위해 필요한 만큼만 지정.
+  PC: 44px (블록 기본 패딩과 동일).
+  실제 수치는 사이트 레이아웃 여백에 맞게 조정.
+*/
+.arti-caption--inset {
+    padding-inline: 16px;
+    /* 모바일: 레이아웃 여백에 맞게 조정 */
+}
+
+@media (min-width: 64rem) {
+    .arti-caption--inset {
+        padding-inline: 44px;
+        /* PC: 블록 패딩과 동일 */
+    }
+}
+
+
+/* ── 6. 이미지 (IMG) ───────────────────────────────────────── */
+
+/* ── IMG-S: 소형 단일 ── */
+.img-s {
+    width: 100%;
+}
+
+.img-s img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+@media (min-width: 64rem) {
+    .img-s {
+        max-width: 650px;
+    }
+}
+
+/* ── IMG-S-DUO: 소형 2장 ──
+   모바일: 상하 배치, 간격 16px, 각 이미지 좌우 100%
+   PC: 좌우 배치, 간격 20px, 각 max 475px
+   캡션: 각 __item 안에서 이미지 폭과 동일하게 처리
+*/
+.img-s-duo {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    /* 모바일: 아이템 간 세로 간격 */
+}
+
+@media (min-width: 64rem) {
+    .img-s-duo {
+        flex-direction: row;
+        gap: 20px;
+        align-items: flex-start;
+    }
+}
+
+.img-s-duo__item {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    /* 모바일: 좌우 100% */
+    flex: 1;
+}
+
+.img-s-duo__item img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+@media (min-width: 64rem) {
+    .img-s-duo__item {
+        max-width: 475px;
+        width: auto;
+    }
+}
+
+/* 각 아이템 안 캡션 → 이미지 폭과 동일 (width: 100% 상속) */
+.img-s-duo__item .arti-caption {
+    width: 100%;
+    max-width: none;
+}
+
+/* ── IMG-M: 중형 단일 ── */
+.img-m {
+    width: 100%;
+}
+
+.img-m img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+@media (min-width: 64rem) {
+    .img-m {
+        max-width: 970px;
+    }
+}
+
+/* ── IMG-M-DUO: 중형 2장 ──
+   모바일: 상하 배치, 간격 16px
+   PC: 좌우 배치, 간격 20px, 각 max 765px
+   캡션: 각 __item 안 이미지 폭과 동일
+*/
+.img-m-duo {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+@media (min-width: 64rem) {
+    .img-m-duo {
+        flex-direction: row;
+        gap: 20px;
+        align-items: flex-start;
+    }
+}
+
+.img-m-duo__item {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    flex: 1;
+}
+
+.img-m-duo__item img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+@media (min-width: 64rem) {
+    .img-m-duo__item {
+        max-width: 765px;
+        width: auto;
+    }
+}
+
+.img-m-duo__item .arti-caption {
+    width: 100%;
+    max-width: none;
+}
+
+/* ── IMG-L: 풀블리드 단일 ──
+   .arti-block--full 안에서 사용.
+   캡션은 .arti-caption--inset 사용.
+*/
+.img-l {
+    width: 100%;
+}
+
+.img-l img {
+    width: 100%;
+    height: auto;
+    max-height: 1120px;
+    object-fit: cover;
+    display: block;
+}
+
+
+/* ── 7. 타이틀 이미지 (TITLE-IMG) ─────────────────────────── */
+
+/*
+  타이틀 이미지는 모두 .arti-block--full 안에 배치.
+  100vw 기법으로 풀블리드 보장.
+*/
+
+/* Title-IMG-F: 풀블리드, PC/모바일 이미지 파일 분리 */
+.title-img-f {
+    width: 100%;
+}
+
+.title-img-f picture,
+.title-img-f__picture {
+    display: block;
+    width: 100%;
+}
+
+.title-img-f img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.title-img-f .title-img-f__pc {
+    display: none !important;
+}
+
+.title-img-f .title-img-f__mobile {
+    display: block !important;
+}
+
+/* 기존 발행 본문의 모든 __pc / __mobile 이미지 쌍도 안전하게 분기한다. */
+@media (max-width: 63.999rem) {
+    .arti-body img[class*="__pc"] {
+        display: none !important;
+    }
+
+    .arti-body img[class*="__mobile"] {
+        display: block !important;
+    }
+}
+
+@media (min-width: 64rem) {
+    .title-img-f .title-img-f__pc {
+        display: block !important;
+    }
+
+    .title-img-f .title-img-f__mobile {
+        display: none !important;
+    }
+
+    .arti-body img[class*="__pc"] {
+        display: block !important;
+    }
+
+    .arti-body img[class*="__mobile"] {
+        display: none !important;
+    }
+}
+
+/* Title-IMG-M: 모바일 풀블리드 / PC max 970px 가운데 */
+.title-img-m {
+    width: 100%;
+}
+
+.title-img-m img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+@media (min-width: 64rem) {
+    .title-img-m {
+        max-width: 970px;
+        margin-inline: auto;
+    }
+}
+
+/* Title-IMG-DUO: 정방형 2장, PC 좌우 / 모바일 상하 간격 없음 */
+.title-img-duo {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    /* 풀블리드(.arti-block--full) 안에서 100vw를 넘지 않도록 */
+    width: 100%;
+    overflow: hidden;
+}
+
+@media (min-width: 64rem) {
+    .title-img-duo {
+        flex-direction: row;
+        align-items: stretch;
+    }
+}
+
+/* 각 이미지: flex child에 min-width: 0 필수 (넘침 방지) */
+.title-img-duo img {
+    display: block;
+    flex: 1 1 0;
+    /* flex-basis 0으로 균등 분할 */
+    min-width: 0;
+    /* 오버플로 방지 핵심 */
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: cover;
+}
+
+
+/* ── 8. 이미지 슬라이드 ────────────────────────────────────── */
+
+/*
+  구조:
+    .img-slide[data-slide]
+      .img-slide__track-wrap          ← 이미지 영역만 담음 (overflow hidden)
+        .img-slide__track
+          .img-slide__item
+            img
+        .img-slide__btn--prev         ← 이미지 위 좌측 오버레이 버튼
+        .img-slide__btn--next         ← 이미지 위 우측 오버레이 버튼
+        .img-slide__dots              ← pill 인디케이터 (JS 동적 생성, 이미지 내부 하단)
+      .img-slide__caption             ← 캡션 (JS 동적 생성, track-wrap 밖)
+
+  캡션을 __track-wrap 밖으로 분리해서
+  pill 인디케이터가 이미지 영역 하단에 정확히 오버레이됨.
+  JS가 슬라이드 전환 시 captionEl.textContent를 업데이트.
+*/
+
+.img-slide {
+    position: relative;
+    width: 100%;
+}
+
+/* 트랙 래퍼: 이미지 영역만 담음 — pill 인디케이터의 absolute 기준점 */
+.img-slide__track-wrap {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+}
+
+.img-slide__track {
+    display: flex;
+    transition: transform 0.4s var(--ease-in-out, cubic-bezier(0.4, 0, 0.2, 1));
+    will-change: transform;
+}
+
+.img-slide__item {
+    flex: 0 0 100%;
+    width: 100%;
+}
+
+.img-slide__item img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* 이미지 위 좌/우 페이지네이션 버튼
+   — 모바일·PC 공통: 이미지 절반씩 차지하는 투명 터치/클릭 영역
+   — 모바일: 중앙에 반투명 원형 아이콘 오버레이
+   — PC: 아이콘 숨김, 커서만 커스텀 SVG로 교체
+*/
+.img-slide__btn--prev,
+.img-slide__btn--next {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    /* 이미지 절반 영역 */
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    z-index: 2;
+    padding: 0;
+    /* ::before/::after (아이콘·배경)의 absolute 기준점 */
+    overflow: visible;
+}
+
+.img-slide__btn--prev {
+    left: 0;
+}
+
+.img-slide__btn--next {
+    right: 0;
+}
+
+/* 모바일: 반투명 원형 아이콘 버튼
+   ::after  — 원형 배경 (popupgray + blur)
+   ::before — 아이콘 (mask로 흰색 적용)
+   두 가상요소 분리: mask가 배경에 영향 주지 않도록 */
+
+/* 공통 배치: 버튼 안에서 절대 중앙 정렬 */
+.img-slide__btn--prev::after,
+.img-slide__btn--next::after,
+.img-slide__btn--prev::before,
+.img-slide__btn--next::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: block;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+}
+
+/* prev: 왼쪽 가장자리 기준 */
+.img-slide__btn--prev::after,
+.img-slide__btn--prev::before {
+    left: 16px;
+}
+
+/* next: 오른쪽 가장자리 기준 */
+.img-slide__btn--next::after,
+.img-slide__btn--next::before {
+    right: 16px;
+}
+
+/* ::after — 원형 배경 */
+.img-slide__btn--prev::after,
+.img-slide__btn--next::after {
+    border-radius: 50%;
+    background: var(--color-popupgray);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px) !important;
+    box-shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.25);
+    z-index: 1;
+}
+
+/* ::before — 아이콘 (mask로 흰색) */
+.img-slide__btn--prev::before,
+.img-slide__btn--next::before {
+    background-color: var(--color-white);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: 20px 20px;
+    mask-size: 20px 20px;
+    z-index: 2;
+}
+
+.img-slide__btn--prev::before {
+    -webkit-mask-image: url('/futiful/icons/arrow-left.svg');
+    mask-image: url('/futiful/icons/arrow-left.svg');
+}
+
+.img-slide__btn--next::before {
+    -webkit-mask-image: url('/futiful/icons/arrow-right.svg');
+    mask-image: url('/futiful/icons/arrow-right.svg');
+}
+
+/* PC: 원형 아이콘 숨김, 커스텀 커서로 대체
+   cursor url() 핫스팟: SVG가 40×40px 기준 → 중앙 (20 20)
+   SVG 파일에 width="40" height="40" 속성이 있어야 브라우저가 크기를 인식함.
+   없으면 기본 크기(32px)로 렌더링되므로 핫스팟을 16 16으로 조정 필요. */
+@media (min-width: 64rem) {
+
+    .img-slide__btn--prev,
+    .img-slide__btn--next {
+        padding: 0;
+    }
+
+    .img-slide__btn--prev {
+        cursor: url('/futiful/icons/move-left.svg') 20 20, w-resize;
+    }
+
+    .img-slide__btn--next {
+        cursor: url('/futiful/icons/move-right.svg') 20 20, e-resize;
+    }
+
+    .img-slide__btn--prev::after,
+    .img-slide__btn--next::after,
+    .img-slide__btn--prev::before,
+    .img-slide__btn--next::before {
+        display: none;
+    }
+}
+
+/* 슬라이드 캡션: track-wrap 밖, JS 동적 생성 */
+.img-slide__caption {
+    margin-top: 10px;
+}
+
+
+/* ── 9. 비디오 ─────────────────────────────────────────────── */
+
+.arti-video {
+    width: 100%;
+}
+
+@media (min-width: 64rem) {
+    .arti-video {
+        max-width: 970px;
+        margin-inline: auto;
+    }
+}
+
+.arti-video video,
+.arti-video iframe {
+    width: 100%;
+    height: auto;
+    display: block;
+    aspect-ratio: 16 / 9;
+}
+
+/* ── 추가: 불릿 리스트 (.arti-list) ────────────────────────── */
+/*
+  노션 bulleted_list_item → .arti-list > .arti-list__item
+  .basic-p 와 같은 폰트 스타일, 앞에 • 마커
+  --narrow 블록 안에서 사용
+*/
+.arti-list {
+    font-family: var(--font-pretendard);
+    font-size: var(--text-body2-kr);
+    line-height: var(--text-body2-kr--line-height);
+    font-weight: var(--text-body2-kr--font-weight);
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+@media (min-width: 64rem) {
+    .arti-list {
+        font-size: var(--text-article-body1-kr);
+        line-height: var(--text-article-body1-kr--line-height);
+        font-weight: var(--text-article-body1-kr--font-weight);
+    }
+}
+
+.arti-list__item {
+    display: flex;
+    gap: 0.6em;
+    align-items: flex-start;
+}
+
+.arti-list__item::before {
+    content: "•";
+    flex-shrink: 0;
+    color: var(--color-label-assistive);
+    line-height: inherit;
+}
+
+
+/* ── 8-2. 슬라이드 pill 인디케이터 ─────────────────────────── */
+/*
+  JS에서 .img-slide__dots 컨테이너와 .img-slide__dot 요소를 동적 생성.
+  .img-slide__track-wrap 안에 absolute 배치 → 이미지 내부 하단 오버레이.
+*/
+
+.img-slide__dots {
+    position: absolute;
+    bottom: 14px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    z-index: 20;
+    pointer-events: none;
+}
+
+@media (min-width: 64rem) {
+    .img-slide__dots {
+        bottom: 18px;
+    }
+}
+
+.img-slide__dot {
+    width: 6px;
+    height: 6px;
+    background: var(--color-neutral-90);
+    border-radius: 3px;
+    transition:
+        width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        background 0.35s ease;
+    flex-shrink: 0;
+}
+
+.img-slide__dot.is-active {
+    width: 22px;
+    background: var(--color-anuorange);
+    border-radius: 3px;
+}
+
+
+/* ── 추가: 크레딧 (.arti-credit) ───────────────────────────── */
+/*
+  .arti-block--narrow 안 .basic-p 블록에서 사용.
+  캡션 폰트 스타일로 작성.
+  노션에서: 콜아웃 🪪 credit 타입으로 입력.
+*/
+.arti-credit {
+    font-family: var(--font-pretendard);
+    font-size: var(--text-caption1-kr);
+    line-height: var(--text-caption1-kr--line-height);
+    font-weight: var(--text-caption1-kr--font-weight);
+    color: var(--color-label-alternative);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-top: 1px solid var(--color-label-assistive);
+    padding-top: 16px;
+}
+
+@media (min-width: 64rem) {
+    .arti-credit {
+        font-size: var(--text-label1-kr);
+        line-height: var(--text-label1-kr--line-height);
+        font-weight: var(--text-label1-kr--font-weight);
+    }
+}
+
+.arti-credit__row {
+    display: flex;
+    gap: 12px;
+}
+
+.arti-credit__label {
+    color: var(--color-label-assistive);
+    flex-shrink: 0;
+    min-width: 48px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ARTICLE FEATURES
+   anu-seoul.com / article/read-new.css 하단 추가
+   ══════════════════════════════════════════════════════════════ */
+
+
+/* ── A. 노티피케이션 (전역 — layout.html 에서도 사용) ──────── */
+/*
+  JS: window.anuNotify(message) 로 어디서든 호출
+  구조:
+    #anu-notify-stack          ← 화면 하단 고정, flex column-reverse (신규가 위로)
+      .anu-notify              ← pill 형태 개별 알림
+        .anu-notify__icon      ← 체크 아이콘
+        .anu-notify__text      ← 메시지
+*/
+
+#anu-notify-stack {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9000;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+    width: max-content;
+    max-width: calc(100vw - 32px);
+}
+
+.anu-notify {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    background: var(--color-popupgray);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    box-shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.25);
+    border-radius: 100px;
+    font-family: var(--font-pretendard);
+    font-size: var(--text-label1-kr);
+    line-height: var(--text-label1-kr--line-height);
+    font-weight: var(--text-label1-kr--font-weight);
+    color: var(--color-white);
+    white-space: nowrap;
+    pointer-events: none;
+    /* 등장 애니메이션 */
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.anu-notify.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.anu-notify.is-hiding {
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+@media (max-width: 63.999rem) {
+    .article-read-more-source {
+        display: none !important;
+    }
+
+    .anu-notify {
+        pointer-events: auto;
+        touch-action: none;
+        transform: translateY(calc(100vh + 100%));
+        transition:
+            opacity 0.65s ease,
+            transform 0.78s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .anu-notify.is-visible {
+        transform: translateY(var(--notify-drag-y, 0px));
+        opacity: var(--notify-drag-opacity, 1);
+    }
+
+    .anu-notify.is-dragging {
+        transition: none;
+    }
+
+    .anu-notify.is-hiding {
+        opacity: 0;
+        transform: translateY(calc(100vh + 100%));
+        transition:
+            opacity 0.65s ease,
+            transform 0.78s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+}
+
+/* 체크 아이콘 (SVG mask) */
+.anu-notify__icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    background-color: var(--color-white);
+    -webkit-mask-image: url('/futiful/icons/check.svg');
+    mask-image: url('/futiful/icons/check.svg');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+}
+
+@media (min-width: 64rem) {
+    .anu-notify {
+        font-size: var(--text-body2-kr);
+        line-height: var(--text-body2-kr--line-height);
+        padding: 16px 24px;
+        gap: 12px;
+    }
+
+    .anu-notify__icon {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+
+/* ── B. 아티클 타이틀 바 ───────────────────────────────────── */
+/*
+  구조:
+    #arti-titlebar
+      .arti-titlebar__inner
+        .arti-titlebar__titles
+          .arti-titlebar__eng     ← 영문 제목
+          .arti-titlebar__kr      ← 한글 제목 (모바일: 줄바꿈, PC: 구분점 뒤 이어짐)
+        .arti-titlebar__share     ← 공유 버튼
+      .arti-titlebar__progress   ← 게이지바 (anu오렌지, 하단)
+
+  동작:
+    - 타이틀 영역(.product-title-kr의 부모 section) 하단 지나면 슬라이드인
+    - 스크롤 진행도 → .arti-titlebar__progress width
+    - 공유 버튼 → 링크 복사 → anuNotify("링크가 클립보드에 복사되었습니다.")
+*/
+
+#arti-titlebar {
+    position: fixed;
+    /* 초기 숨김: 화면 위로 완전히 숨김.
+     JS가 is-visible 시 top을 nav bottom + gap으로 교체. */
+    top: -200px;
+    left: 0;
+    width: 100%;
+    z-index: 40;
+    /* 헤더(z-50), shop-menu(z-50) 아래 */
+    background-color: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, top 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: top, opacity;
+}
+
+#arti-titlebar.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    /* top은 JS가 동적으로 설정 */
+}
+
+.arti-titlebar__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 16px;
+    max-width: 100%;
+}
+
+.arti-titlebar__titles {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+}
+
+.arti-titlebar__eng {
+    font-family: var(--font-akkurat);
+    font-size: var(--text-caption2);
+    line-height: var(--text-caption2--line-height);
+    font-weight: var(--text-caption2-kr--font-weight);
+    color: var(--color-black);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+}
+
+.arti-titlebar__kr {
+    font-family: var(--font-pretendard);
+    font-size: var(--text-caption2-kr);
+    line-height: var(--text-caption2-kr--line-height);
+    font-weight: var(--text-caption2-kr--font-weight);
+    color: var(--color-black);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* PC: 한줄 가로 배열 */
+@media (min-width: 64rem) {
+    .arti-titlebar__inner {
+        padding: 0 44px;
+        height: 48px;
+    }
+
+    .arti-titlebar__titles {
+        flex-direction: row;
+        align-items: baseline;
+        gap: 20px;
+    }
+
+    .arti-titlebar__eng {
+        font-size: var(--text-body1);
+        line-height: var(--text-caption2--line-height);
+        font-weight: var(--text-caption2--font-weight);
+        flex-shrink: 0;
+    }
+
+    .arti-titlebar__kr {
+        font-size: var(--text-body1-kr);
+        line-height: var(--text-caption2-kr--line-height);
+        font-weight: var(--text-caption2-kr--font-weight);
+        color: var(--color-black);
+    }
+
+}
+
+/* 공유 버튼 */
+.arti-titlebar__share {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+    font-family: var(--font-pretendard);
+    font-size: var(--text-label1-kr);
+    line-height: var(--text-label1-kr--line-height);
+    font-weight: 700;
+    color: var(--color-black);
+    white-space: nowrap;
+}
+
+.arti-titlebar__share:hover {
+    color: var(--color-neutral-50);
+}
+
+.arti-titlebar__share-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    background-color: var(--color-black);
+    -webkit-mask-image: url('/futiful/icons/article-share.svg');
+    mask-image: url('/futiful/icons/article-share.svg');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+}
+
+.arti-titlebar__share-icon:hover {
+    background-color: var(--color-neutral-50);
+}
+
+@media (min-width: 64rem) {
+    .arti-titlebar__share {
+        font-size: var(--text-body1-kr);
+        line-height: var(--text-body1-kr--line-height);
+        gap: 6px;
+    }
+
+    .arti-titlebar__share-icon {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+/* 진행 게이지 바 */
+.arti-titlebar__progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    width: 0%;
+    background: var(--color-anuorange);
+    transition: width 0.1s linear;
+    pointer-events: none;
+}
+
+
+/* ── C. 상품 링크 팝업 ─────────────────────────────────────── */
+/*
+  아티클 내 .arti-product-link 클릭 → 팝업
+  타이틀바 바로 아래에 등장 (top은 JS에서 계산)
+
+  구조:
+    #arti-product-popup
+      .app__close                  ← 닫기 X 버튼
+      .app__img-wrap               ← 상품 이미지 + 상세보기 화살표
+        img
+        .app__img-arrow            ← → 아이콘 (상세 이동)
+      .app__sale-badge             ← n% OFF (할인시만)
+      .app__info
+        .app__name                 ← 영문 상품명
+        .app__price-wrap
+          .app__price-original     ← 원가 (할인시 취소선)
+          .app__price-sale         ← 할인가 (할인시만)
+        .app__desc                 ← 상품 간략설명
+      .app__actions
+        .app__btn-detail           ← 더 알아보기
+        .app__btn-cart             ← 장바구니에 담기 (옵션 있으면 숨김)
+
+  모바일: 이미지 상단 / 텍스트 하단 세로형
+  PC: 이미지 좌측 / 텍스트 우측 가로형
+*/
+
+#arti-product-popup {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    width: calc(100% - 64px);
+    max-width: 480px;
+    z-index: 790;
+    background: var(--color-popupwhite);
+    border-radius: 12px;
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    box-shadow: 0 8px 40px 0 rgba(0, 0, 0, 0.12), 0 2px 8px 0 rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    overscroll-behavior: contain;
+    /* 초기 숨김 */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+        opacity 0.65s ease,
+        transform 0.78s cubic-bezier(0.22, 1, 0.36, 1),
+        visibility 0.65s ease;
+}
+
+#arti-product-popup.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+@media (max-width: 63.999rem) {
+    #arti-product-popup {
+        transform: translateX(-50%) translateY(calc(100vh + 100%));
+        opacity: 0;
+        transition:
+            opacity 0.65s ease,
+            transform 0.78s cubic-bezier(0.22, 1, 0.36, 1),
+            visibility 0.65s ease;
+    }
+
+    #arti-product-popup.is-visible {
+        transform: translateX(-50%) translateY(var(--app-drag-y, 0px));
+        opacity: var(--app-drag-opacity, 1);
+    }
+
+    #arti-product-popup.is-dragging {
+        transition: none;
+    }
+
+    #arti-product-popup.is-dismissing {
+        transform: translateX(-50%) translateY(calc(100vh + 100%));
+        opacity: 0;
+    }
+}
+
+@media (min-width: 64rem) {
+    #arti-product-popup {
+        width: min(calc(100% - 64px), 920px);
+        max-width: 920px;
+        border-radius: 16px;
+    }
+}
+
+/* 닫기 버튼 */
+.app__close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 30;
+    color: var(--color-label-alternative);
+    padding: 0;
+}
+
+.app__close:hover {
+    color: var(--color-black);
+}
+
+.app__close-icon {
+    width: 18px;
+    height: 18px;
+    background-color: currentColor;
+    -webkit-mask-image: url('/futiful/icons/icon-close.svg');
+    mask-image: url('/futiful/icons/icon-close.svg');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+}
+
+/* 모바일: 세로형 레이아웃 */
+.app__inner {
+    display: flex;
+    flex-direction: column;
+}
+
+@media (min-width: 64rem) {
+    .app__inner {
+        flex-direction: row;
+        align-items: stretch;
+    }
+}
+
+/* 이미지 영역 */
+.app__img-wrap {
+    position: relative;
+    flex-shrink: 0;
+    background: var(--color-neutral-5, #f5f5f3);
+    overflow: hidden;
+    touch-action: none;
+}
+
+/* 모바일: 가로 전체, 정방형 */
+.app__img-wrap {
+    width: 100%;
+    aspect-ratio: 1;
+}
+
+@media (min-width: 64rem) {
+    .app__img-wrap {
+        width: 50%;
+        aspect-ratio: 1;
+        flex-shrink: 0;
+    }
+}
+
+.app__img-track {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+}
+
+.app__img-slide {
+    width: 100%;
+    height: 100%;
+    flex: 0 0 100%;
+}
+
+.app__img-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.app__slide-nav {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    z-index: 10;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.app__slide-nav--prev {
+    left: 0;
+}
+
+.app__slide-nav--next {
+    right: 0;
+}
+
+.app__slide-nav[hidden] {
+    display: none;
+}
+
+.app__slide-nav:disabled {
+    cursor: default;
+}
+
+.app__slide-dots {
+    position: absolute;
+    bottom: 16px;
+    left: 0;
+    width: 100%;
+    z-index: 20;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+}
+
+.app__slide-dots[hidden] {
+    display: none;
+}
+
+.app__slide-dot {
+    width: 6px;
+    height: 6px;
+    flex-shrink: 0;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.2);
+    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), background 0.35s ease;
+}
+
+.app__slide-dot.is-active {
+    width: 22px;
+    background: var(--color-anuorange);
+}
+
+@media (max-width: 63.999rem) {
+    .app__slide-nav {
+        display: none;
+    }
+}
+
+@media (min-width: 64rem) {
+    .app__slide-nav--prev {
+        cursor: url('/futiful/icons/move-left.svg') 20 20, w-resize;
+    }
+
+    .app__slide-nav--next {
+        cursor: url('/futiful/icons/move-right.svg') 20 20, e-resize;
+    }
+
+    .app__slide-nav:disabled {
+        cursor: default;
+    }
+
+    .app__slide-dots {
+        bottom: 18px;
+    }
+}
+
+/* 할인 배지 */
+.app__sale-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 21;
+    font-family: var(--font-akkurat);
+    font-size: var(--text-caption2);
+    font-weight: 700;
+    color: var(--color-anuorange);
+    letter-spacing: 0.02em;
+}
+
+.app__sale-badge--mobile {
+    display: none;
+}
+
+@media (max-width: 63.999rem) {
+    .app__img-wrap > .app__sale-badge {
+        display: none !important;
+    }
+
+    .app__sale-badge--mobile {
+        position: static;
+        display: block;
+        margin-left: auto;
+        font-family: var(--font-akkurat);
+        font-size: var(--text-caption2);
+        font-weight: 700;
+        color: var(--color-anuorange);
+        letter-spacing: 0.02em;
+    }
+}
+
+/* 정보 영역 */
+.app__info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px 20px 0;
+    flex: 1;
+    min-width: 0;
+}
+
+@media (min-width: 64rem) {
+    .app__info {
+        padding: 28px 28px 0;
+        gap: 16px;
+        justify-content: flex-start;
+    }
+}
+
+.app__content {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.app__name {
+    font-family: var(--font-akkurat);
+    font-size: var(--text-body1);
+    line-height: 1.2;
+    font-weight: 700;
+    color: var(--color-black);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+@media (min-width: 64rem) {
+    .app__name {
+        font-size: var(--text-heading2);
+    }
+}
+
+.app__price-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.app__price-original {
+    font-family: var(--font-pretendard);
+    font-size: var(--text-body2-kr);
+    color: var(--color-label-assistive);
+}
+
+.app__price-original.is-strike {
+    text-decoration: line-through;
+}
+
+.app__price-sale {
+    font-family: var(--font-pretendard);
+    font-size: var(--text-body2-kr);
+    font-weight: 500;
+    color: var(--color-black);
+    display: none;
+    /* 할인시만 표시 */
+}
+
+.app__price-sale.is-visible {
+    display: block;
+}
+
+.app__desc {
+    font-family: var(--font-pretendard);
+    font-size: var(--text-label1-kr);
+    line-height: var(--text-label1-kr--line-height);
+    color: var(--color-label-alternative);
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    /* 모바일: 2줄 클램프 */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+@media (min-width: 64rem) {
+    .app__desc {
+        font-size: var(--text-body2-kr);
+        line-height: var(--text-body2-kr--line-height);
+        -webkit-line-clamp: 4;
+    }
+}
+
+/* 버튼 영역 */
+.app__actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 16px 20px 20px;
+}
+
+@media (min-width: 64rem) {
+    .app__actions {
+        padding: 24px 28px 28px;
+    }
+}
+
+.app__btn-detail,
+.app__btn-cart {
+    height: 48px;
+    border: 1px solid var(--color-black);
+    background: transparent;
+    cursor: pointer;
+    font-family: var(--font-pretendard);
+    font-size: var(--text-label1-kr);
+    font-weight: 500;
+    color: var(--color-black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.app__btn-cart {
+    background: var(--color-black);
+    color: var(--color-white);
+}
+
+.app__btn-detail:hover {
+    background: var(--color-black);
+    color: var(--color-white);
+}
+
+.app__btn-cart:hover {
+    background: var(--color-neutral-80, #333);
+}
+
+/* 장바구니 버튼 — 옵션있는 상품은 JS에서 숨김 */
+.app__btn-cart[hidden] {
+    display: none;
+}
+
+/* 버튼이 1개일 때 전체폭 */
+.app__actions:has(.app__btn-cart[hidden]) .app__btn-detail {
+    grid-column: 1 / -1;
+}
+
+
+/* ── D. 피드백 영역 ────────────────────────────────────────── */
+/*
+  arti-body 마지막 블록으로 삽입하는 HTML 컴포넌트.
+  구조:
+    .arti-feedback
+      .arti-feedback__q         ← "이 글이 도움이 되었나요?"
+      .arti-feedback__reactions
+        .arti-feedback__btn[data-reaction]  ← 리액션 버튼 3개
+          .arti-feedback__btn-icon
+          .arti-feedback__btn-count
+          .arti-feedback__btn-label
+      .arti-feedback__comment-wrap
+        p                       ← "여러분의 생각을 들려주세요."
+        .arti-feedback__textarea-wrap
+          textarea
+          button.arti-feedback__submit
+*/
+
+.arti-feedback {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-top: 80px;
+
+}
+
+.arti-feedback__heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.arti-feedback__share {
+    flex-shrink: 0;
+}
+
+@media (min-width: 64rem) {
+    .arti-feedback {
+        gap: 40px;
+        padding-top: 120px;
+    }
+}
+
+.arti-feedback__q {
+    font-family: var(--font-pretendard);
+    font-size: var(--text-label2-kr);
+    line-height: var(--text-label2-kr--line-height);
+    font-weight: 700;
+    color: var(--color-black);
+}
+
+@media (min-width: 64rem) {
+    .arti-feedback__q {
+        font-size: var(--text-heading2-kr);
+        line-height: var(--text-heading2-kr--line-height);
+        font-weight: 500;
+    }
+}
+
+/* 리액션 버튼 행 */
+.arti-feedback__reactions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: -10px;
+}
+
+.arti-feedback__btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    font-family: var(--font-pretendard);
+    color: var(--color-label-alternative);
+    transition: color 0.15s ease;
+}
+
+@media (min-width: 64rem) {
+    .arti-feedback__reactions {
+        margin-top: -30px;
+    }
+
+    .arti-feedback__btn {
+        gap: 8px;
+    }
+}
+
+.arti-feedback__btn:hover {
+    color: var(--color-black);
+}
+
+.arti-feedback__btn.is-active {
+    color: var(--color-black);
+}
+
+.arti-feedback__btn-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    background-color: currentColor;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    vertical-align: middle;
+    transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+/* 각 리액션 아이콘 */
+[data-reaction="like"] .arti-feedback__btn-icon {
+    -webkit-mask-image: url('/futiful/icons/reaction-like.svg');
+    mask-image: url('/futiful/icons/reaction-like.svg');
+}
+
+[data-reaction="useful"] .arti-feedback__btn-icon {
+    -webkit-mask-image: url('/futiful/icons/reaction-useful.svg');
+    mask-image: url('/futiful/icons/reaction-useful.svg');
+}
+
+[data-reaction="inspired"] .arti-feedback__btn-icon {
+    -webkit-mask-image: url('/futiful/icons/reaction-inspired.svg');
+    mask-image: url('/futiful/icons/reaction-inspired.svg');
+}
+
+.arti-feedback__btn-count {
+    font-family: var(--font-akkurat);
+    font-size: var(--text-caption1);
+    font-weight: 700;
+    color: currentColor;
+    min-width: 1.2em;
+    text-align: right;
+    margin-left: -12px;
+}
+
+.arti-feedback__btn-label {
+    font-size: var(--text-caption1);
+    line-height: 1;
+    color: currentColor;
+}
+
+.arti-feedback__btn.is-animating .arti-feedback__btn-icon,
+.arti-feedback__btn.is-animating .arti-feedback__btn-count {
+    animation: arti-reaction-pop 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes arti-reaction-pop {
+    0% {
+        transform: scale(1);
+    }
+    45% {
+        transform: scale(1.22) translateY(-2px);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .arti-feedback__btn.is-animating .arti-feedback__btn-icon,
+    .arti-feedback__btn.is-animating .arti-feedback__btn-count {
+        animation: none;
+    }
+}
+
+@media (min-width: 64rem) {
+    .arti-feedback__btn-count {
+        font-size: var(--text-label1);
+        margin-left: -16px;
+    }
+
+    .arti-feedback__btn-label {
+        font-size: var(--text-headline2);
+    }
+
+    .arti-feedback__btn-icon {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+/* 의견 입력 영역 */
+
+
+.arti-feedback__comment-label {
+    display: block;
+    font-family: var(--font-pretendard);
+    font-size: var(--text-label2-kr);
+    line-height: var(--text-label2-kr--line-height);
+    font-weight: 700;
+    color: var(--color-black);
+    margin-bottom: 8px;
+}
+
+@media (min-width: 64rem) {
+    .arti-feedback__comment-label {
+        font-size: var(--text-heading2-kr);
+        line-height: var(--text-heading2-kr--line-height);
+        font-weight: 500;
+        margin-bottom: 8px;
+    }
+}
+
+.arti-feedback__textarea-wrap {
+    position: relative;
+}
+
+.arti-feedback__textarea-wrap p {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+    letter-spacing: -0.02em;
+    /* 자간 조정이 필요하다면 */
+}
+
+.arti-feedback__textarea {
+    width: 100%;
+    min-height: 80px;
+    resize: none;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    padding: 12px 52px 12px 12px;
+    font-family: var(--font-pretendard);
+    font-size: var(--text-label1-kr);
+    line-height: var(--text-label1-kr--line-height);
+    color: var(--color-black);
+    background: var(--color-neutral-99);
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
+    outline: none;
+}
+
+.arti-feedback__textarea::placeholder {
+    color: var(--color-label-assistive);
+}
+
+.arti-feedback__textarea:focus {
+    border-color: var(--color-black);
+}
+
+.arti-feedback__textarea.is-invalid {
+    border-color: #e5484d;
+    animation: arti-feedback-shake 0.25s ease;
+}
+
+@keyframes arti-feedback-shake {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    35% {
+        transform: translateX(-3px);
+    }
+    70% {
+        transform: translateX(3px);
+    }
+}
+
+@media (min-width: 64rem) {
+    .arti-feedback__textarea {
+        min-height: 100px;
+        font-size: var(--text-body2-kr);
+        padding: 20px 60px 20px 20px;
+    }
+}
+
+/* 제출 버튼 (textarea 우하단 내부) */
+.arti-feedback__submit {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--color-black);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+}
+
+.arti-feedback__submit:hover {
+    background: var(--color-neutral-80, #333);
+}
+
+.arti-feedback__submit.is-submitting {
+    cursor: wait;
+    opacity: 0.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .arti-feedback__textarea.is-invalid {
+        animation: none;
+    }
+}
+
+.arti-feedback__submit-icon {
+    width: 16px;
+    height: 16px;
+    background-color: var(--color-white);
+    -webkit-mask-image: url('/futiful/icons/arrow-up.svg');
+    mask-image: url('/futiful/icons/arrow-up.svg');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+}
+
+
+/* ── 모바일: Read More / Related Products 카드 슬라이더 ─────── */
+@media (max-width: 63.999rem) {
+    .article-card-slider,
+    .related-product-slider {
+        width: 100%;
+    }
+
+    .article-card-slider {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 60px;
+    }
+
+    .article-card-slider[hidden] {
+        display: none;
+    }
+
+    .article-card-slider__heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        font-family: var(--font-akkurat);
+        font-size: var(--text-label2);
+        line-height: var(--text-label2--line-height);
+        font-weight: 400;
+        color: var(--color-black);
+    }
+
+    .article-card-slider__heading a {
+        color: inherit;
+        text-decoration: underline;
+        text-underline-position: from-font;
+    }
+
+    .article-card-slider__viewport,
+    .related-product-slider__viewport {
+        position: relative;
+        width: calc(100% + 16px);
+        overflow: hidden;
+        cursor: grab;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    .article-card-slider__viewport:active,
+    .related-product-slider__viewport:active {
+        cursor: grabbing;
+    }
+
+    .related-product-slider {
+        margin-top: 60px !important;
+    }
+
+    .related-product-slider__inner {
+        gap: 12px !important;
+    }
+
+    .related-product-slider__inner > h4 {
+        font-family: var(--font-akkurat);
+        font-size: var(--text-label2);
+        line-height: var(--text-label2--line-height);
+        font-weight: 400;
+    }
+
+    .article-card-slider__track,
+    #related-products-container {
+        display: flex !important;
+        align-items: flex-start;
+        gap: 12px !important;
+        width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-right: 16px;
+        scroll-snap-type: x proximity;
+        overscroll-behavior-x: contain;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .article-card-slider__track::-webkit-scrollbar,
+    #related-products-container::-webkit-scrollbar {
+        display: none;
+    }
+
+    /*
+      360px 시안에서 슬라이더 가용 폭은 344px.
+      px 고정값 대신 시안 비율(240/344, 200/344)을 유지한다.
+    */
+    .article-read-more-card {
+        display: flex;
+        flex: 0 0 69.7674%;
+        flex-direction: column;
+        gap: 12px;
+        min-width: 0;
+        overflow: hidden;
+        color: var(--color-black);
+        scroll-snap-align: start;
+    }
+
+    .article-read-more-card__image {
+        width: 100%;
+        aspect-ratio: 4 / 5;
+        overflow: hidden;
+        background: var(--color-neutral-90);
+    }
+
+    .article-read-more-card__image img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .article-read-more-card__info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .article-read-more-card__meta {
+        width: 100%;
+        overflow: hidden;
+        font-family: var(--font-akkurat);
+        font-size: var(--text-caption1);
+        line-height: var(--text-caption1--line-height);
+        font-weight: 400;
+        color: #BBBBBB;
+        text-transform: uppercase;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .article-read-more-card__eng {
+        width: 100%;
+        font-family: var(--font-akkurat);
+        font-size: var(--text-label2);
+        line-height: var(--text-label2--line-height);
+        font-weight: 400;
+        color: var(--color-black);
+        text-transform: uppercase;
+    }
+
+    .article-read-more-card__kr {
+        width: 100%;
+        font-family: var(--font-pretendard);
+        font-size: var(--text-label2-kr);
+        line-height: var(--text-label2-kr--line-height);
+        font-weight: 500;
+        color: var(--color-black);
+    }
+
+    #related-products-container > * {
+        flex: 0 0 58.1395%;
+        min-width: 0;
+        scroll-snap-align: start;
+    }
+
+    #related-products-container .product-card {
+        gap: 10px;
+        width: 100%;
+        height: auto;
+    }
+
+    #related-products-container .product-card > .relative {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1;
+        overflow: hidden;
+    }
+
+    #related-products-container .product-card > .relative > div:first-child,
+    #related-products-container .product-card .thumb {
+        width: 100%;
+        height: 100%;
+    }
+
+    #related-products-container .product-card .thumb {
+        display: block;
+        object-fit: cover;
+    }
+
+    /*
+      기존 .product-card 내부 마크업을 그대로 유지하므로 할인율,
+      정상가/할인가, 품절 오버레이 등 기본 썸네일 정보도 함께 노출된다.
+    */
+    #related-products-container .product-card .product-info {
+        position: relative;
+        width: 100%;
+        height: auto;
+        padding: 0;
+        font-family: var(--font-akkurat);
+        font-size: var(--text-label2) !important;
+        line-height: var(--text-label2--line-height) !important;
+        font-weight: 400 !important;
+    }
+
+    #related-products-container .product-card .product-info span {
+        font-family: var(--font-akkurat);
+    }
+
+    .article-card-slider__prev,
+    .article-card-slider__next,
+    .related-product-slider__prev,
+    .related-product-slider__next {
+        position: absolute;
+        top: 0;
+        z-index: 5;
+        display: block;
+        width: 30%;
+        padding: 0;
+        border: 0;
+        color: var(--color-white);
+        background: transparent;
+        pointer-events: none;
+    }
+
+    .article-card-slider__prev,
+    .related-product-slider__prev {
+        left: 0;
+    }
+
+    .article-card-slider__next,
+    .related-product-slider__next {
+        right: 0;
+    }
+
+    .article-card-slider__prev,
+    .article-card-slider__next {
+        height: calc((100vw - 16px) * 0.8720925);
+    }
+
+    .related-product-slider__prev,
+    .related-product-slider__next {
+        height: calc((100vw - 16px) * 0.581395);
+    }
+
+    .article-card-slider__prev::before,
+    .article-card-slider__next::before,
+    .related-product-slider__prev::before,
+    .related-product-slider__next::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--color-popupgray);
+        -webkit-backdrop-filter: blur(15px);
+        backdrop-filter: blur(15px);
+        box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25),
+            0 0 24px var(--color-label-assistive);
+        transform: translate(-50%, -50%);
+    }
+
+    .article-card-slider__prev::after,
+    .article-card-slider__next::after,
+    .related-product-slider__prev::after,
+    .related-product-slider__next::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 16px;
+        height: 16px;
+        background: currentColor;
+        -webkit-mask-image: url('/futiful/icons/arrow-right.svg');
+        mask-image: url('/futiful/icons/arrow-right.svg');
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        transform: translate(-50%, -50%);
+    }
+
+    .article-card-slider__prev::before,
+    .article-card-slider__prev::after,
+    .related-product-slider__prev::before,
+    .related-product-slider__prev::after {
+        left: 28px;
+    }
+
+    .article-card-slider__next::before,
+    .article-card-slider__next::after,
+    .related-product-slider__next::before,
+    .related-product-slider__next::after {
+        right: 28px;
+        transform: translate(50%, -50%);
+    }
+
+    .article-card-slider__prev::after,
+    .related-product-slider__prev::after {
+        transform: translate(-50%, -50%) rotate(180deg);
+    }
+
+    .article-card-slider__prev[hidden],
+    .article-card-slider__next[hidden],
+    .related-product-slider__prev[hidden],
+    .related-product-slider__next[hidden] {
+        display: none;
+    }
+}
+
+@media (min-width: 64rem) {
+    #article-read-more-source {
+        display: none !important;
+    }
+
+    .article-card-slider,
+    .related-product-slider {
+        width: 100%;
+    }
+
+    .article-card-slider {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        margin-top: 120px;
+        order: 2;
+    }
+
+    .article-card-slider[hidden] {
+        display: none;
+    }
+
+    .article-card-slider__heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        font-family: var(--font-akkurat);
+        font-size: 24px;
+        line-height: 36px;
+        font-weight: 400;
+        color: var(--color-black);
+    }
+
+    .article-card-slider__heading a {
+        color: inherit;
+        text-decoration: underline;
+        text-underline-position: from-font;
+    }
+
+    .related-product-slider {
+        margin-top: 120px !important;
+        order: 1;
+    }
+
+    .related-product-slider__inner {
+        gap: 24px !important;
+    }
+
+    .related-product-slider__inner > h4 {
+        font-family: var(--font-akkurat);
+        font-size: 24px;
+        line-height: 36px;
+        font-weight: 400;
+    }
+
+    .article-card-slider__viewport,
+    .related-product-slider__viewport {
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+        cursor: grab;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    .article-card-slider__viewport:active,
+    .related-product-slider__viewport:active {
+        cursor: grabbing;
+    }
+
+    .article-card-slider__track,
+    #related-products-container {
+        display: flex !important;
+        align-items: flex-start;
+        width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x proximity;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
+    }
+
+    .article-card-slider__track {
+        gap: 2.407%;
+    }
+
+    #related-products-container {
+        gap: 2.407% !important;
+    }
+
+    .article-card-slider__track::-webkit-scrollbar,
+    #related-products-container::-webkit-scrollbar {
+        display: none;
+    }
+
+    /*
+      Figma 1922px 프레임의 실제 콘텐츠 폭 1828px 기준:
+      Read More 540/1828, Related Products 424/1828.
+      카드 자체는 고정 px가 아니라 컨테이너 비율로 축소·확대된다.
+    */
+    .article-read-more-card {
+        display: flex;
+        flex: 0 0 29.5405%;
+        flex-direction: column;
+        gap: 12px;
+        min-width: 0;
+        overflow: hidden;
+        color: var(--color-black);
+        scroll-snap-align: start;
+    }
+
+    .article-read-more-card__image {
+        width: 100%;
+        aspect-ratio: 4 / 5;
+        overflow: hidden;
+        background: var(--color-neutral-90);
+    }
+
+    .article-read-more-card__image img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+
+    .article-read-more-card:hover .article-read-more-card__image img {
+        transform: scale(1.03);
+    }
+
+    .article-read-more-card__info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .article-read-more-card__meta {
+        width: 100%;
+        overflow: hidden;
+        color: #BBBBBB;
+        font-family: var(--font-akkurat);
+        font-size: 13px;
+        line-height: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .article-read-more-card__eng {
+        width: 100%;
+        color: var(--color-black);
+        font-family: var(--font-akkurat);
+        font-size: 18px;
+        line-height: 26px;
+        font-weight: 400;
+        text-transform: uppercase;
+    }
+
+    .article-read-more-card__kr {
+        width: 100%;
+        color: var(--color-black);
+        font-family: var(--font-pretendard);
+        font-size: 18px;
+        line-height: 26px;
+        font-weight: 400;
+    }
+
+    #related-products-container > * {
+        flex: 0 0 23.1947%;
+        min-width: 0;
+        scroll-snap-align: start;
+    }
+
+    #related-products-container .product-card {
+        width: 100%;
+        height: auto;
+    }
+
+    #related-products-container .product-card > .relative {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1;
+        overflow: hidden;
+    }
+
+    #related-products-container .product-card > .relative > div:first-child,
+    #related-products-container .product-card .thumb {
+        width: 100%;
+        height: 100%;
+    }
+
+    #related-products-container .product-card .thumb {
+        display: block;
+        object-fit: cover;
+    }
+
+    .article-card-slider__prev,
+    .article-card-slider__next,
+    .related-product-slider__prev,
+    .related-product-slider__next {
+        position: absolute;
+        top: 0;
+        z-index: 5;
+        display: block;
+        width: 30%;
+        padding: 0;
+        border: 0;
+        color: var(--color-white);
+        background: transparent;
+        pointer-events: none;
+    }
+
+    .article-card-slider__prev,
+    .related-product-slider__prev {
+        left: 0;
+    }
+
+    .article-card-slider__next,
+    .related-product-slider__next {
+        right: 0;
+    }
+
+    .article-card-slider__prev,
+    .article-card-slider__next {
+        height: calc((100vw - 88px) * 0.369256);
+    }
+
+    .related-product-slider__prev,
+    .related-product-slider__next {
+        height: calc((100vw - 220px) / 4);
+    }
+
+    .article-card-slider__prev::before,
+    .article-card-slider__next::before,
+    .related-product-slider__prev::before,
+    .related-product-slider__next::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--color-popupgray);
+        -webkit-backdrop-filter: blur(15px);
+        backdrop-filter: blur(15px);
+        box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25),
+            0 0 24px var(--color-label-assistive);
+        transform: translate(-50%, -50%);
+    }
+
+    .article-card-slider__prev::after,
+    .article-card-slider__next::after,
+    .related-product-slider__prev::after,
+    .related-product-slider__next::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 24px;
+        height: 24px;
+        background: currentColor;
+        -webkit-mask-image: url('/futiful/icons/arrow-right.svg');
+        mask-image: url('/futiful/icons/arrow-right.svg');
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        transform: translate(-50%, -50%);
+    }
+
+    .article-card-slider__prev::before,
+    .article-card-slider__prev::after,
+    .related-product-slider__prev::before,
+    .related-product-slider__prev::after {
+        left: 28px;
+    }
+
+    .article-card-slider__next::before,
+    .article-card-slider__next::after,
+    .related-product-slider__next::before,
+    .related-product-slider__next::after {
+        right: 28px;
+        transform: translate(50%, -50%);
+    }
+
+    .article-card-slider__prev::after,
+    .related-product-slider__prev::after {
+        transform: translate(-50%, -50%) rotate(180deg);
+    }
+
+    .article-card-slider__prev[hidden],
+    .article-card-slider__next[hidden],
+    .related-product-slider__prev[hidden],
+    .related-product-slider__next[hidden] {
+        display: none;
+    }
+}

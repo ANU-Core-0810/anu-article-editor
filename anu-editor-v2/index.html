@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ANU Article Studio</title>
+  <link rel="stylesheet" href="./app.css">
+</head>
+<body>
+  <main class="app-shell">
+    <aside class="sidebar" aria-label="Article navigation">
+      <header class="sidebar__head">
+        <div class="brand">
+          <span class="brand__mark" aria-hidden="true">A</span>
+          <div>
+            <strong>Article Studio</strong>
+            <span>ANU editorial workspace</span>
+          </div>
+        </div>
+        <button class="icon-button" type="button" aria-label="새 아티클">+</button>
+      </header>
+
+      <label class="search-field">
+        <span class="sr-only">Search articles</span>
+        <input type="search" placeholder="Search title, code, status">
+      </label>
+
+      <div class="segmented" role="tablist" aria-label="Status filter">
+        <button class="is-active" type="button">All</button>
+        <button type="button">등록 중</button>
+        <button type="button">업데이트</button>
+      </div>
+
+      <nav class="article-list" aria-label="Articles">
+        <button class="article-row is-active" type="button">
+          <span>ARTI26-001</span>
+          <strong>손의 경험 | 좋은 보울을 만드는 요소</strong>
+          <em>등록 중</em>
+        </button>
+        <button class="article-row" type="button">
+          <span>ARTI26-004</span>
+          <strong>여름의 식사는 왜 더 단순해질까</strong>
+          <em>업데이트</em>
+        </button>
+        <button class="article-row" type="button">
+          <span>ARTI26-006</span>
+          <strong>지속가능한 도자기를 만드는 방법</strong>
+          <em>작성 중</em>
+        </button>
+      </nav>
+    </aside>
+
+    <section class="editor" aria-label="Article editor">
+      <header class="topbar">
+        <div class="title-fields">
+          <input id="englishTitle" class="title-input" value="What Makes a Good Bowl" aria-label="English title">
+          <input id="koreanTitle" class="subtitle-input" value="손의 경험 | 좋은 보울을 만드는 요소" aria-label="Korean title">
+        </div>
+        <div class="topbar__actions">
+          <span id="saveState" class="save-state">Saved</span>
+          <button class="plain-button" type="button" id="importJson">Import JSON</button>
+          <button class="plain-button" type="button" id="copyJson">Copy JSON</button>
+          <button class="plain-button" type="button" id="copyHtml">Copy HTML</button>
+          <button class="primary-button" type="button" id="saveDraft">Save</button>
+          <input id="importJsonInput" class="sr-only" type="file" accept="application/json,.json">
+        </div>
+      </header>
+
+      <div class="workarea">
+        <section class="composer" aria-label="Composer">
+          <section class="panel meta-panel">
+            <div class="panel__head">
+              <h2>Meta</h2>
+              <button class="plain-button" type="button">Sync</button>
+            </div>
+            <div class="meta-grid">
+              <label class="field">
+                <span>Status</span>
+                <select id="articleStatus">
+                  <option>시작 전</option>
+                  <option>작성 중</option>
+                  <option selected>등록 중</option>
+                  <option>업데이트</option>
+                  <option>업로드</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Article code</span>
+                <input id="articleCode" value="ARTI26-001">
+              </label>
+              <label class="field">
+                <span>Category</span>
+                <input id="articleCategory" value="Craft · Guide">
+              </label>
+              <label class="field field--wide">
+                <span>Deck</span>
+                <textarea id="articleDeck">손의 촉감, 무게감, 곡선이 좋은 보울을 완성하는 방식을 살펴봅니다.</textarea>
+              </label>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel__head">
+              <h2>Blocks</h2>
+              <div class="block-tools" aria-label="Add block">
+                <button type="button" data-add="text">Text</button>
+                <button type="button" data-add="heading">Heading</button>
+                <button type="button" data-add="image">Image</button>
+                <button type="button" data-add="duo">Duo</button>
+                <button type="button" data-add="quote">Quote</button>
+                <button type="button" data-add="slide">Slide</button>
+                <button type="button" data-add="video">Video</button>
+                <button type="button" data-add="credit">Credit</button>
+              </div>
+            </div>
+            <div id="blockList" class="block-list" aria-live="polite"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel__head">
+              <h2>Cafe24 Export</h2>
+              <span id="gasState" class="panel-state">Ready</span>
+            </div>
+            <div class="pipeline-panel">
+              <label class="field field--wide">
+                <span>GAS Web App URL</span>
+                <input id="gasEndpoint" placeholder="Local test URL or blank on Netlify">
+              </label>
+              <label class="field">
+                <span>Access token</span>
+                <input id="gasToken" placeholder="Optional">
+              </label>
+              <label class="field field--wide">
+                <span>Notion editor page ID</span>
+                <input id="editorPageId" placeholder="아티클 편집기 page_id">
+              </label>
+              <div class="pipeline-actions">
+                <button class="plain-button" type="button" data-gas-action="saveEditorData">Save to Notion</button>
+                <button class="plain-button" type="button" data-gas-action="runAll">Run all</button>
+                <button class="plain-button" type="button" data-gas-action="exportRegistrationCsv">Registration CSV</button>
+                <button class="plain-button" type="button" data-gas-action="exportUpdateCsv">Update CSV</button>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section class="preview" aria-label="Preview">
+          <div class="preview__toolbar">
+            <div class="segmented segmented--preview" role="group" aria-label="Preview size">
+              <button class="is-active" type="button" data-width="1440">Desktop</button>
+              <button type="button" data-width="834">Tablet</button>
+              <button type="button" data-width="390">Mobile</button>
+            </div>
+            <label class="viewport-slider">
+              <span id="viewportLabel">1440px</span>
+              <input id="viewportRange" type="range" min="320" max="1440" value="1440">
+            </label>
+          </div>
+          <div class="preview__stage">
+            <div id="deviceFrame" class="device-frame">
+              <iframe id="previewFrame" src="./preview.html" title="Article preview"></iframe>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>

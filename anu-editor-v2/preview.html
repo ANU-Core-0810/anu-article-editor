@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ANU Article Preview</title>
+  <link rel="stylesheet" href="./site-assets/layout.css">
+  <link rel="stylesheet" href="./site-assets/style.css">
+  <link rel="stylesheet" href="./site-assets/read-new.css">
+  <style>
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+      background: #fff;
+      color: #1d1d1f;
+    }
+
+    .preview-shell {
+      padding: 56px 0 120px;
+    }
+
+    .preview-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 8fr) minmax(260px, 4fr);
+      gap: 44px;
+      max-width: 1440px;
+      margin: 0 auto 72px;
+      padding: 0 44px;
+    }
+
+    .preview-kicker {
+      margin: 0 0 13px;
+      color: rgba(29, 29, 31, 0.58);
+      font-size: 12px;
+      line-height: 1.4;
+      text-transform: uppercase;
+    }
+
+    .preview-title {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 0;
+      color: #111;
+      font-family: var(--font-akkurat, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+      font-size: 64px;
+      font-weight: 650;
+      line-height: 1.04;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .preview-title span {
+      font-family: var(--font-pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+      font-size: 23px;
+      font-weight: 450;
+      line-height: 1.45;
+      text-transform: none;
+    }
+
+    .preview-deck {
+      align-self: end;
+      margin: 0;
+      color: #45484d;
+      font-size: 17px;
+      line-height: 1.68;
+    }
+
+    .preview-body {
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 900px) {
+      .preview-title {
+        font-size: 44px;
+      }
+    }
+
+    @media (max-width: 767px) {
+      .preview-shell {
+        padding: 32px 0 88px;
+      }
+
+      .preview-hero {
+        display: block;
+        margin-bottom: 44px;
+        padding: 0 16px;
+      }
+
+      .preview-title {
+        font-size: 38px;
+      }
+
+      .preview-title span {
+        font-size: 19px;
+      }
+
+      .preview-deck {
+        margin-top: 24px;
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="preview-shell">
+    <section class="preview-hero">
+      <div>
+        <p id="previewCategory" class="preview-kicker">Craft · Guide</p>
+        <h1 id="previewTitle" class="preview-title">What Makes a Good Bowl<span>손의 경험 | 좋은 보울을 만드는 요소</span></h1>
+      </div>
+      <p id="previewDeck" class="preview-deck">손의 촉감, 무게감, 곡선이 좋은 보울을 완성하는 방식을 살펴봅니다.</p>
+    </section>
+    <section id="previewBody" class="preview-body">
+      <div class="arti-body">
+        <div class="arti-block arti-block--narrow">
+          <p class="basic-p">손에 닿는 감각은 보울을 고르는 가장 직관적인 기준입니다.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="./site-assets/arti-body.js"></script>
+  <script>
+    const titleEl = document.getElementById('previewTitle');
+    const categoryEl = document.getElementById('previewCategory');
+    const deckEl = document.getElementById('previewDeck');
+    const bodyEl = document.getElementById('previewBody');
+
+    function renderArticle(payload) {
+      const meta = payload.meta || {};
+      const englishTitle = meta.englishTitle || 'Untitled Article';
+      const koreanTitle = meta.koreanTitle || '';
+      titleEl.innerHTML = escapeHtml(englishTitle) + (koreanTitle ? '<span>' + escapeHtml(koreanTitle) + '</span>' : '');
+      categoryEl.textContent = meta.category || meta.code || 'Article';
+      deckEl.textContent = meta.deck || '';
+      bodyEl.innerHTML = payload.html || '<div class="arti-body"></div>';
+      bodyEl.querySelectorAll('[data-reveal]').forEach(element => {
+        element.classList.add('is-visible');
+      });
+      document.dispatchEvent(new Event('DOMContentLoaded'));
+    }
+
+    window.addEventListener('message', event => {
+      if (!event.data || event.data.type !== 'ANU_ARTICLE_PREVIEW_UPDATE') return;
+      renderArticle(event.data.payload || {});
+    });
+
+    window.parent.postMessage({ type: 'ANU_ARTICLE_PREVIEW_READY' }, '*');
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+  </script>
+</body>
+</html>
