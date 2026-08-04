@@ -635,7 +635,9 @@ function getPipelineEndpoint() {
   const explicitEndpoint = els.gasEndpoint.value.trim();
   if (explicitEndpoint) return explicitEndpoint;
   const isLocal = ['127.0.0.1', 'localhost', ''].includes(window.location.hostname);
-  return isLocal ? '' : '/.netlify/functions/gas-proxy';
+  if (isLocal) return '';
+  if (window.location.hostname.endsWith('.netlify.app')) return '/.netlify/functions/gas-proxy';
+  return '/api/gas-proxy';
 }
 
 function markGasState(label) {

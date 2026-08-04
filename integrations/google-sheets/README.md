@@ -21,7 +21,7 @@ Notion integration에는 최소 권한이 필요하다.
 - 아티클 편집기 읽기
 - 변환 HTML을 다시 기록하려면 아티클 편집기 업데이트 권한
 
-`WEB_APP_TOKEN`은 선택값이다. 값을 넣어두면 Netlify/HTML 에디터에서 GAS Web App을 호출할 때 같은 토큰을 보내야 실행된다.
+`WEB_APP_TOKEN`은 선택값이다. 값을 넣어두면 Cloudflare Pages/Netlify/HTML 에디터에서 GAS Web App을 호출할 때 같은 토큰을 보내야 실행된다.
 
 ## 아티클 편집기 DB 추가 권장 속성
 
@@ -69,7 +69,14 @@ HTML 에디터를 원문 작성의 기준으로 쓰려면 `아티클 편집기` 
 
 브라우저는 반환된 CSV 문자열을 파일로 다운로드한다. Cafe24 업로드는 현재 CSV 기준으로 잡아두었고, xlsx가 꼭 필요하면 같은 API에서 Drive export 방식으로 확장한다.
 
-Netlify에서 운영할 때는 브라우저가 GAS를 직접 호출하지 않고 `/.netlify/functions/gas-proxy`를 통해 호출한다. Netlify 환경 변수에 아래 값을 넣는다.
+Cloudflare Pages에서 운영할 때는 브라우저가 GAS를 직접 호출하지 않고 `/api/gas-proxy`를 통해 호출한다. Cloudflare Pages 환경 변수에 아래 값을 넣는다.
+
+```text
+GAS_WEB_APP_URL=https://script.google.com/macros/s/.../exec
+GAS_WEB_APP_TOKEN=WEB_APP_TOKEN과 같은 값
+```
+
+Netlify에서 운영할 때는 브라우저가 GAS를 직접 호출하지 않고 `/.netlify/functions/gas-proxy`를 통해 호출한다. Netlify 환경 변수에도 같은 값을 넣는다.
 
 ```text
 GAS_WEB_APP_URL=https://script.google.com/macros/s/.../exec
