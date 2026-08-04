@@ -39,6 +39,9 @@
 (function () {
   'use strict';
 
+  var responsiveInitDone = false;
+  var noteDocumentBound = false;
+
   /* ──────────────────────────────────────────────
      0. 기존 PC/모바일 이미지 마크업 정규화
 
@@ -88,6 +91,8 @@
 
   function initResponsiveImages() {
     normalizeResponsiveImages(document);
+    if (responsiveInitDone) return;
+    responsiveInitDone = true;
 
     /*
       Cafe24 모바일 상세 이미지 최적화와 iOS/Instagram WebView의 페이지
@@ -126,6 +131,9 @@
 
   function initSlides() {
     document.querySelectorAll('[data-slide]').forEach(function (slider) {
+      if (slider.getAttribute('data-slide-bound') === 'true') return;
+      slider.setAttribute('data-slide-bound', 'true');
+
       var trackWrap = slider.querySelector('.img-slide__track-wrap');
       var track = slider.querySelector('.img-slide__track');
       var items = slider.querySelectorAll('.img-slide__item');
@@ -306,6 +314,8 @@
 
   function initNoteTriggers() {
     bindNoteTriggers(document);
+    if (noteDocumentBound) return;
+    noteDocumentBound = true;
     document.addEventListener('click', closeAllNotes);
   }
 
@@ -333,6 +343,8 @@
     initSlides();
     initNoteTriggers();
   }
+
+  window.ANUArticleBodyInit = init;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

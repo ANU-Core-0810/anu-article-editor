@@ -365,6 +365,15 @@ function handleApiAction_(payload) {
     case 'saveEditorData':
       return saveEditorDataFromApi_(payload);
 
+    case 'listArticles':
+      return listArticlesForApi_(payload);
+
+    case 'generateArticleCode':
+      return {
+        message: 'Article code ready',
+        articleCode: generateNextArticleCode_(),
+      };
+
     default:
       throw new Error(`Unsupported API action: ${action}`);
   }
@@ -382,18 +391,122 @@ function saveEditorDataFromApi_(payload) {
     throw new Error('Missing html');
   }
 
-  const properties = {};
-  properties['HTML 출력'] = richTextProperty_(html);
-  properties[CONFIG.editorDataPropertyName] = richTextProperty_(JSON.stringify(editorData, null, 2));
-  properties['피드백'] = richTextProperty_('Saved from ANU Article Studio');
-  properties['변환 상태'] = selectProperty_('웹에디터 저장');
-  properties['변환기 버전'] = richTextProperty_(CONFIG.webEditorVersion);
-  properties['변환 시각'] = dateProperty_(new Date());
+  const editorPage = getEditorPage_(editorPageId, {});
+  const properties = pickExistingProperties_(editorPage, {
+    '이름': titleProperty_(payload.meta && payload.meta.koreanTitle),
+    'HTML 출력': richTextProperty_(html),
+    [CONFIG.editorDataPropertyName]: richTextProperty_(JSON.stringify(editorData, null, 2)),
+    '피드백': richTextProperty_('Saved from ANU Article Studio'),
+    '변환 상태': selectProperty_('웹에디터 저장'),
+    '변환기 버전': richTextProperty_(CONFIG.webEditorVersion),
+    '변환 시각': dateProperty_(new Date()),
+  });
 
-  updateNotionPage_(editorPageId, properties);
+  if (Object.keys(properties).length) {
+    updateNotionPage_(editorPageId, properties);
+  }
+
+  const articlePageId = String(payload.articlePageId || '').trim();
+  if (articlePageId) {
+    updateArticleMetaFromApi_(articlePageId, payload.meta || {});
+  }
+
   return {
     message: 'Editor data saved to Notion',
   };
+}
+
+function listArticlesForApi_(payload) {
+  const query = {
+    sorts: [{ property: '발행일', direction: 'descending' }],
+  };
+  if (!payload.includeAll) {
+    query.filter = buildSyncStatusFilter_();
+  }
+
+  const pages = queryAllDataSourcePages_(CONFIG.articleDataSourceId, query);
+  const editorCache = {};
+  const articles = pages.map((page) => articlePageToApiObject_(page, editorCache));
+  return {
+    message: `Loaded ${articles.length} article(s) from Notion`,
+    articles,
+  };
+}
+
+function articlePageToApiObject_(page, editorCache) {
+  const props = page.properties || {};
+  const editorId = firstRelationId_(props['편집기']);
+  const editor = editorId ? getEditorPage_(editorId, editorCache) : null;
+  const editorProps = editor && editor.properties ? editor.properties : {};
+
+  return {
+    articlePageId: page.id,
+    notionUrl: page.url || '',
+    status: statusName_(props['상태']),
+    englishTitle: titleText_(props['제목(영문)']),
+    koreanTitle: editor ? titleText_(editorProps['이름']) : '',
+    articleCode: plainText_(props['아티클코드']),
+    deck: plainText_(props['요약(Deck)']),
+    category: selectName_(props['카테고리']),
+    type: selectName_(props['타입']),
+    publishDate: dateStart_(props['발행일']),
+    cafe24ProductNo: numberValue_(props['카페24 상품번호']),
+    cafe24ProductCode: plainText_(props['카페24 상품코드']),
+    productCategoryIds: plainText_(props['상품분류 번호']),
+    editorPageId: editorId,
+    html: editor ? plainText_(editorProps['HTML 출력']) : '',
+    editorData: parseEditorData_(editor),
+  };
+}
+
+function parseEditorData_(editor) {
+  if (!editor || !editor.properties || !editor.properties[CONFIG.editorDataPropertyName]) {
+    return null;
+  }
+
+  const raw = plainText_(editor.properties[CONFIG.editorDataPropertyName]);
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    return null;
+  }
+}
+
+function updateArticleMetaFromApi_(articlePageId, meta) {
+  const articlePage = getEditorPage_(articlePageId, {});
+  const properties = pickExistingProperties_(articlePage, {
+    '상태': statusProperty_(meta.status),
+    '제목(영문)': titleProperty_(meta.englishTitle),
+    '아티클코드': richTextProperty_(meta.code),
+    '요약(Deck)': richTextProperty_(meta.deck),
+    '카테고리': selectProperty_(meta.category),
+    '타입': selectProperty_(meta.type),
+    '발행일': dateOnlyProperty_(meta.publishDate),
+    '카페24 상품번호': numberProperty_(meta.cafe24ProductNo),
+    '카페24 상품코드': richTextProperty_(meta.cafe24ProductCode),
+    '상품분류 번호': richTextProperty_(meta.productCategoryIds || CONFIG.defaultCategoryIds),
+  });
+
+  if (Object.keys(properties).length) {
+    updateNotionPage_(articlePageId, properties);
+  }
+}
+
+function generateNextArticleCode_() {
+  const year = Utilities.formatDate(new Date(), 'Asia/Seoul', 'yy');
+  const prefix = `ARTI${year}-`;
+  const pages = queryAllDataSourcePages_(CONFIG.articleDataSourceId, {});
+  let maxNumber = 0;
+
+  pages.forEach((page) => {
+    const code = plainText_(page.properties && page.properties['아티클코드']);
+    const match = String(code || '').trim().match(new RegExp(`^${prefix}(\\d+)$`, 'i'));
+    if (match) maxNumber = Math.max(maxNumber, Number(match[1]));
+  });
+
+  return `${prefix}${String(maxNumber + 1).padStart(3, '0')}`;
 }
 
 function buildCsvApiResponse_(sheetName, filename) {
@@ -903,12 +1016,51 @@ function richTextProperty_(value) {
   return { rich_text: chunks };
 }
 
+function titleProperty_(value) {
+  const text = String(value || '');
+  if (!text) return { title: [] };
+
+  const chunks = [];
+  for (let index = 0; index < text.length; index += 1900) {
+    chunks.push({ text: { content: text.slice(index, index + 1900) } });
+  }
+  return { title: chunks };
+}
+
 function selectProperty_(name) {
   return name ? { select: { name } } : { select: null };
 }
 
+function statusProperty_(name) {
+  return name ? { status: { name } } : { status: null };
+}
+
+function numberProperty_(value) {
+  const text = String(value || '').trim();
+  if (!text) return { number: null };
+  const number = Number(text);
+  return Number.isFinite(number) ? { number } : { number: null };
+}
+
 function dateProperty_(date) {
   return { date: { start: Utilities.formatDate(date, 'Asia/Seoul', "yyyy-MM-dd'T'HH:mm:ssXXX") } };
+}
+
+function dateOnlyProperty_(value) {
+  const text = String(value || '').trim();
+  if (!text) return { date: null };
+  const match = text.match(/^\d{4}-\d{2}-\d{2}/);
+  return match ? { date: { start: match[0] } } : { date: null };
+}
+
+function pickExistingProperties_(page, properties) {
+  const existing = page && page.properties ? page.properties : {};
+  return Object.keys(properties).reduce((acc, key) => {
+    if (Object.prototype.hasOwnProperty.call(existing, key) && properties[key]) {
+      acc[key] = properties[key];
+    }
+    return acc;
+  }, {});
 }
 
 function parseApiPayload_(event) {

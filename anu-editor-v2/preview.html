@@ -140,7 +140,7 @@
       bodyEl.querySelectorAll('[data-reveal]').forEach(element => {
         element.classList.add('is-visible');
       });
-      document.dispatchEvent(new Event('DOMContentLoaded'));
+      if (window.ANUArticleBodyInit) window.ANUArticleBodyInit();
     }
 
     window.addEventListener('message', event => {

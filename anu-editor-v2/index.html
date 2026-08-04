@@ -58,6 +58,8 @@
         </div>
         <div class="topbar__actions">
           <span id="saveState" class="save-state">Saved</span>
+          <button class="plain-button" type="button" id="toggleSidebar">Articles</button>
+          <button class="plain-button" type="button" id="toggleComposerFloat">Float Editor</button>
           <button class="plain-button" type="button" id="importJson">Import JSON</button>
           <button class="plain-button" type="button" id="copyJson">Copy JSON</button>
           <button class="plain-button" type="button" id="copyHtml">Copy HTML</button>
@@ -69,10 +71,14 @@
 
       <div class="workarea">
         <section class="composer" aria-label="Composer">
+          <div class="composer__floatbar">
+            <span>Editor</span>
+            <button type="button" id="minimizeComposer">Minimize</button>
+          </div>
           <section class="panel meta-panel">
             <div class="panel__head">
               <h2>Meta</h2>
-              <button class="plain-button" type="button">Sync</button>
+              <button class="plain-button" type="button" id="loadArticles">Load Notion</button>
             </div>
             <div class="meta-grid">
               <label class="field">
@@ -89,9 +95,41 @@
                 <span>Article code</span>
                 <input id="articleCode" value="ARTI26-001">
               </label>
+              <button class="plain-button field-button" type="button" id="generateArticleCode">Generate code</button>
               <label class="field">
                 <span>Category</span>
-                <input id="articleCategory" value="Craft · Guide">
+                <select id="articleCategory">
+                  <option value="life">life</option>
+                  <option value="craft" selected>craft</option>
+                  <option value="sustainability">sustainability</option>
+                  <option value="archive">archive</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Type</span>
+                <select id="articleType">
+                  <option value="essay">essay</option>
+                  <option value="interview">interview</option>
+                  <option value="curation">curation</option>
+                  <option value="guide" selected>guide</option>
+                  <option value="project">project</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Publish date</span>
+                <input id="publishDate" type="date">
+              </label>
+              <label class="field">
+                <span>Cafe24 product no.</span>
+                <input id="cafe24ProductNo" inputmode="numeric">
+              </label>
+              <label class="field">
+                <span>Cafe24 product code</span>
+                <input id="cafe24ProductCode">
+              </label>
+              <label class="field">
+                <span>Product category IDs</span>
+                <input id="productCategoryIds" value="114|117">
               </label>
               <label class="field field--wide">
                 <span>Deck</span>
@@ -135,6 +173,10 @@
               <label class="field field--wide">
                 <span>Notion editor page ID</span>
                 <input id="editorPageId" placeholder="아티클 편집기 page_id">
+              </label>
+              <label class="field field--wide">
+                <span>Notion article page ID</span>
+                <input id="articlePageId" placeholder="아티클 DB page_id">
               </label>
               <div class="pipeline-actions">
                 <button class="plain-button" type="button" data-gas-action="saveEditorData">Save to Notion</button>

@@ -13,12 +13,20 @@ const state = {
   previewReady: false,
   viewportWidth: 1440,
   selectedBlockId: 'b1',
+  articles: [],
   meta: {
     englishTitle: 'What Makes a Good Bowl',
     koreanTitle: '손의 경험 | 좋은 보울을 만드는 요소',
     status: '등록 중',
     code: 'ARTI26-001',
-    category: 'Craft · Guide',
+    category: 'craft',
+    type: 'guide',
+    publishDate: '',
+    cafe24ProductNo: '',
+    cafe24ProductCode: '',
+    productCategoryIds: '114|117',
+    articlePageId: '',
+    editorPageId: '',
     deck: '손의 촉감, 무게감, 곡선이 좋은 보울을 완성하는 방식을 살펴봅니다.',
   },
   blocks: [
@@ -62,20 +70,32 @@ const els = {
   articleCode: document.getElementById('articleCode'),
   articleCategory: document.getElementById('articleCategory'),
   articleDeck: document.getElementById('articleDeck'),
+  articleList: document.querySelector('.article-list'),
+  articlePageId: document.getElementById('articlePageId'),
+  articleType: document.getElementById('articleType'),
   blockList: document.getElementById('blockList'),
+  cafe24ProductCode: document.getElementById('cafe24ProductCode'),
+  cafe24ProductNo: document.getElementById('cafe24ProductNo'),
   copyHtml: document.getElementById('copyHtml'),
   copyJson: document.getElementById('copyJson'),
   deviceFrame: document.getElementById('deviceFrame'),
   editorPageId: document.getElementById('editorPageId'),
+  generateArticleCode: document.getElementById('generateArticleCode'),
   gasEndpoint: document.getElementById('gasEndpoint'),
   gasState: document.getElementById('gasState'),
   gasToken: document.getElementById('gasToken'),
   importJson: document.getElementById('importJson'),
   importJsonInput: document.getElementById('importJsonInput'),
+  loadArticles: document.getElementById('loadArticles'),
+  minimizeComposer: document.getElementById('minimizeComposer'),
   previewFrame: document.getElementById('previewFrame'),
+  productCategoryIds: document.getElementById('productCategoryIds'),
+  publishDate: document.getElementById('publishDate'),
   saveDraft: document.getElementById('saveDraft'),
   saveState: document.getElementById('saveState'),
+  toggleComposerFloat: document.getElementById('toggleComposerFloat'),
   toggleExport: document.getElementById('toggleExport'),
+  toggleSidebar: document.getElementById('toggleSidebar'),
   viewportLabel: document.getElementById('viewportLabel'),
   viewportRange: document.getElementById('viewportRange'),
   cafeExportPanel: document.getElementById('cafeExportPanel'),
@@ -396,8 +416,9 @@ function blockFieldsHtml(block) {
 }
 
 function bindEvents() {
-  ['englishTitle', 'koreanTitle', 'articleStatus', 'articleCode', 'articleCategory', 'articleDeck'].forEach(id => {
+  ['englishTitle', 'koreanTitle', 'articleStatus', 'articleCode', 'articleCategory', 'articleType', 'publishDate', 'cafe24ProductNo', 'cafe24ProductCode', 'productCategoryIds', 'articlePageId', 'editorPageId', 'articleDeck'].forEach(id => {
     els[id].addEventListener('input', syncMetaFromInputs);
+    els[id].addEventListener('change', syncMetaFromInputs);
   });
 
   document.querySelectorAll('[data-add]').forEach(button => {
@@ -550,12 +571,25 @@ function bindEvents() {
 
   els.copyHtml.addEventListener('click', copyCurrentHtml);
   els.copyJson.addEventListener('click', copyCurrentJson);
+  els.generateArticleCode.addEventListener('click', generateAndSetArticleCode);
   els.importJson.addEventListener('click', () => els.importJsonInput.click());
   els.importJsonInput.addEventListener('change', importJsonFile);
+  els.loadArticles.addEventListener('click', loadArticlesFromNotion);
+  els.minimizeComposer.addEventListener('click', () => document.body.classList.toggle('composer-minimized'));
   els.saveDraft.addEventListener('click', saveDraft);
+  els.toggleComposerFloat.addEventListener('click', () => document.body.classList.toggle('composer-floating'));
   els.toggleExport.addEventListener('click', () => {
     els.cafeExportPanel.classList.toggle('is-collapsed');
   });
+  els.toggleSidebar.addEventListener('click', () => document.body.classList.toggle('sidebar-collapsed'));
+
+  els.articleList.addEventListener('click', event => {
+    const row = event.target.closest('[data-article-index]');
+    if (!row) return;
+    selectArticle(Number(row.dataset.articleIndex));
+  });
+
+  bindFloatingComposerDrag();
 
   els.previewFrame.addEventListener('load', () => {
     state.previewReady = true;
@@ -1115,6 +1149,13 @@ function syncMetaFromInputs() {
     status: els.articleStatus.value,
     code: els.articleCode.value,
     category: els.articleCategory.value,
+    type: els.articleType.value,
+    publishDate: els.publishDate.value,
+    cafe24ProductNo: els.cafe24ProductNo.value,
+    cafe24ProductCode: els.cafe24ProductCode.value,
+    productCategoryIds: els.productCategoryIds.value,
+    articlePageId: els.articlePageId.value,
+    editorPageId: els.editorPageId.value,
     deck: els.articleDeck.value,
   };
   updatePreview();
@@ -1134,6 +1175,71 @@ function updatePreview() {
   }, '*');
 }
 
+function renderArticleList() {
+  if (!state.articles.length) {
+    els.articleList.innerHTML = '<p class="empty-state">No articles loaded.</p>';
+    return;
+  }
+
+  els.articleList.innerHTML = state.articles.map((article, index) => {
+    const selected = article.articlePageId && article.articlePageId === state.meta.articlePageId ? ' is-active' : '';
+    return `<button class="article-row${selected}" type="button" data-article-index="${index}">
+      <span>${escapeHtml(article.articleCode || 'NO-CODE')}</span>
+      <strong>${escapeHtml(article.koreanTitle || article.englishTitle || 'Untitled')}</strong>
+      <em>${escapeHtml(article.status || '')}</em>
+    </button>`;
+  }).join('');
+}
+
+function selectArticle(index) {
+  const article = state.articles[index];
+  if (!article) return;
+
+  const payload = article.editorData && Array.isArray(article.editorData.blocks)
+    ? article.editorData
+    : {
+      version: 3,
+      meta: articleToEditorMeta(article),
+      blocks: createStarterBlocks(article),
+    };
+
+  applyEditorPayload(payload);
+  state.meta = Object.assign({}, state.meta, articleToEditorMeta(article));
+  syncInputsFromMeta();
+  renderArticleList();
+  renderBlockList();
+  updatePreview();
+  markSaved('Loaded');
+}
+
+function articleToEditorMeta(article) {
+  return {
+    englishTitle: article.englishTitle || '',
+    koreanTitle: article.koreanTitle || '',
+    status: article.status || '등록 중',
+    code: article.articleCode || '',
+    category: article.category || 'craft',
+    type: article.type || 'guide',
+    publishDate: article.publishDate || '',
+    cafe24ProductNo: article.cafe24ProductNo == null ? '' : String(article.cafe24ProductNo),
+    cafe24ProductCode: article.cafe24ProductCode || '',
+    productCategoryIds: article.productCategoryIds || '114|117',
+    articlePageId: article.articlePageId || '',
+    editorPageId: article.editorPageId || '',
+    deck: article.deck || '',
+  };
+}
+
+function createStarterBlocks(article) {
+  const blocks = [];
+  if (article.html) {
+    blocks.push({ id: createBlockId(), type: 'text', children: [{ type: 'paragraph', html: 'Notion HTML 출력이 이미 있습니다. Copy HTML 또는 Save to Notion으로 덮어쓰기 전에 확인하세요.' }] });
+  } else {
+    blocks.push({ id: createBlockId(), type: 'text', children: [{ type: 'paragraph', html: '본문을 입력하세요.' }] });
+  }
+  return blocks;
+}
+
 function setViewport(width) {
   state.viewportWidth = Number(width);
   els.viewportRange.value = state.viewportWidth;
@@ -1146,6 +1252,41 @@ function markSelected(blockId) {
   state.selectedBlockId = blockId;
   document.querySelectorAll('.block-card').forEach(card => {
     card.classList.toggle('is-selected', card.dataset.id === blockId);
+  });
+}
+
+function bindFloatingComposerDrag() {
+  const composer = document.querySelector('.composer');
+  const handle = document.querySelector('.composer__floatbar');
+  if (!composer || !handle) return;
+
+  let drag = null;
+  handle.addEventListener('pointerdown', event => {
+    if (!document.body.classList.contains('composer-floating')) return;
+    if (event.target.closest('button')) return;
+    const rect = composer.getBoundingClientRect();
+    drag = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      left: rect.left,
+      top: rect.top,
+    };
+    handle.setPointerCapture(event.pointerId);
+  });
+
+  handle.addEventListener('pointermove', event => {
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const nextLeft = Math.max(8, Math.min(window.innerWidth - 320, drag.left + event.clientX - drag.startX));
+    const nextTop = Math.max(72, Math.min(window.innerHeight - 120, drag.top + event.clientY - drag.startY));
+    composer.style.left = `${nextLeft}px`;
+    composer.style.top = `${nextTop}px`;
+  });
+
+  handle.addEventListener('pointerup', event => {
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    drag = null;
+    handle.releasePointerCapture(event.pointerId);
   });
 }
 
@@ -1256,36 +1397,21 @@ function syncInputsFromMeta() {
   els.koreanTitle.value = state.meta.koreanTitle || '';
   els.articleStatus.value = state.meta.status || '등록 중';
   els.articleCode.value = state.meta.code || '';
-  els.articleCategory.value = state.meta.category || '';
+  els.articleCategory.value = state.meta.category || 'craft';
+  els.articleType.value = state.meta.type || 'guide';
+  els.publishDate.value = state.meta.publishDate || '';
+  els.cafe24ProductNo.value = state.meta.cafe24ProductNo || '';
+  els.cafe24ProductCode.value = state.meta.cafe24ProductCode || '';
+  els.productCategoryIds.value = state.meta.productCategoryIds || '114|117';
+  els.articlePageId.value = state.meta.articlePageId || '';
+  els.editorPageId.value = state.meta.editorPageId || '';
   els.articleDeck.value = state.meta.deck || '';
 }
 
 async function runGasAction(action) {
-  const endpoint = getPipelineEndpoint();
-  if (!endpoint) {
-    markGasState('Add GAS URL');
-    els.gasEndpoint.focus();
-    return;
-  }
-
-  markGasState('Running');
   try {
-    const payload = buildEditorPayload();
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        action,
-        token: els.gasToken.value.trim(),
-        editorPageId: els.editorPageId.value.trim(),
-        editorData: payload,
-        html: payload.html,
-        articleCode: state.meta.code,
-      }),
-    });
-    const result = await response.json();
-    if (!result.ok) throw new Error(result.error || 'GAS request failed');
-
+    markGasState('Running');
+    const result = await callGasApi(action);
     if (result.csv) {
       downloadText(result.csv, result.filename || `${action}.csv`, result.mimeType || 'text/csv;charset=utf-8');
     }
@@ -1294,6 +1420,69 @@ async function runGasAction(action) {
   } catch (error) {
     markGasState(error.message || 'Failed');
   }
+}
+
+async function callGasApi(action, extraPayload = {}) {
+  const endpoint = getPipelineEndpoint();
+  if (!endpoint) {
+    markGasState('Add GAS URL');
+    els.gasEndpoint.focus();
+    throw new Error('Add GAS URL');
+  }
+
+  const payload = buildEditorPayload();
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({
+      action,
+      token: els.gasToken.value.trim(),
+      editorPageId: els.editorPageId.value.trim(),
+      articlePageId: els.articlePageId.value.trim(),
+      editorData: payload,
+      meta: state.meta,
+      html: payload.html,
+      articleCode: state.meta.code,
+    }, extraPayload)),
+  });
+  const result = await response.json();
+  if (!result.ok) throw new Error(result.error || 'GAS request failed');
+  return result;
+}
+
+async function loadArticlesFromNotion() {
+  try {
+    markSaved('Loading');
+    const result = await callGasApi('listArticles', { includeAll: true });
+    state.articles = result.articles || [];
+    renderArticleList();
+    markGasState(result.message || `Loaded ${state.articles.length}`);
+    markSaved('Loaded');
+  } catch (error) {
+    markGasState(error.message || 'Load failed');
+    markSaved('Load failed');
+  }
+}
+
+async function generateAndSetArticleCode() {
+  try {
+    const result = await callGasApi('generateArticleCode');
+    els.articleCode.value = result.articleCode || generateLocalArticleCode();
+  } catch (error) {
+    els.articleCode.value = generateLocalArticleCode();
+  }
+  syncMetaFromInputs();
+  markSaved('Code ready');
+}
+
+function generateLocalArticleCode() {
+  const year = String(new Date().getFullYear()).slice(2);
+  const prefix = `ARTI${year}-`;
+  const max = state.articles.reduce((acc, article) => {
+    const match = String(article.articleCode || '').match(new RegExp(`^${prefix}(\\d+)$`, 'i'));
+    return match ? Math.max(acc, Number(match[1])) : acc;
+  }, 0);
+  return `${prefix}${String(max + 1).padStart(3, '0')}`;
 }
 
 function getPipelineEndpoint() {

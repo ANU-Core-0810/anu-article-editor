@@ -58,6 +58,15 @@ button {
   min-height: 720px;
 }
 
+body.sidebar-collapsed .app-shell {
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+
+body.sidebar-collapsed .sidebar {
+  overflow: hidden;
+  border-right: 0;
+}
+
 .sidebar {
   display: flex;
   min-width: 0;
@@ -245,6 +254,13 @@ button {
   padding: 0 10px 14px;
 }
 
+.empty-state {
+  margin: 10px 4px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .article-row {
   display: flex;
   flex-direction: column;
@@ -339,10 +355,81 @@ button {
 }
 
 .composer {
+  position: relative;
   min-width: 0;
   overflow: auto;
   border-right: 1px solid var(--line);
   padding: 18px;
+}
+
+.composer__floatbar {
+  display: none;
+}
+
+body.composer-floating .workarea {
+  grid-template-columns: 1fr;
+}
+
+body.composer-floating .composer {
+  position: fixed;
+  top: 84px;
+  left: 304px;
+  z-index: 60;
+  width: min(560px, calc(100vw - 32px));
+  min-width: 360px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 104px);
+  resize: both;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+}
+
+body.composer-floating .composer__floatbar {
+  position: sticky;
+  top: -18px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 34px;
+  margin: -18px -18px 14px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.94);
+  padding: 0 10px;
+  cursor: move;
+}
+
+.composer__floatbar span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.composer__floatbar button {
+  min-height: 24px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--muted);
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+body.composer-minimized .composer {
+  width: 260px;
+  min-width: 260px;
+  height: 42px;
+  min-height: 42px;
+  overflow: hidden;
+  resize: none;
+}
+
+body.composer-minimized .composer > .panel,
+body.composer-minimized .composer > .block-list {
+  display: none;
 }
 
 .panel {
@@ -375,6 +462,10 @@ button {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   padding: 14px;
+}
+
+.field-button {
+  align-self: end;
 }
 
 .field--wide {
@@ -885,6 +976,7 @@ button {
 
   .meta-grid,
   .image-grid,
+  .duo-editor__item,
   .pipeline-panel {
     grid-template-columns: 1fr;
   }
