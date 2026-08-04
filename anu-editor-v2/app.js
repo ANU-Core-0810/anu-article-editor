@@ -1,5 +1,6 @@
 const ARTICLE_IMAGE_BASE = 'https://pub-14eaf4c4a9324927bf2879a272de972a.r2.dev';
 const EDITOR_STORAGE_KEY = 'anu-article-editor-v2';
+const TEXT_NODE_TYPES = ['paragraph', 'subheading'];
 let nextBlockNumber = 4;
 
 const state = {
@@ -18,7 +19,20 @@ const state = {
     {
       id: 'b1',
       type: 'text',
-      text: '손에 닿는 감각은 보울을 고르는 가장 직관적인 기준입니다. 좋은 보울은 음식이 담기는 순간뿐 아니라, 비어 있을 때의 무게와 곡선에서도 균형을 드러냅니다.',
+      children: [
+        {
+          type: 'paragraph',
+          html: '손에 닿는 감각은 보울을 고르는 가장 직관적인 기준입니다. <strong>좋은 보울</strong>은 음식이 담기는 순간뿐 아니라, 비어 있을 때의 무게와 곡선에서도 균형을 드러냅니다.',
+        },
+        {
+          type: 'subheading',
+          html: '소제목은 텍스트 블록 안에서 관리합니다.',
+        },
+        {
+          type: 'paragraph',
+          html: '본문 안에는 <a href="https://anu-seoul.com" data-link-type="external" target="_blank" rel="noopener">외부 링크</a>, 상품 링크, 팝업 링크를 함께 저장할 수 있습니다.',
+        },
+      ],
     },
     {
       id: 'b2',
@@ -55,8 +69,10 @@ const els = {
   previewFrame: document.getElementById('previewFrame'),
   saveDraft: document.getElementById('saveDraft'),
   saveState: document.getElementById('saveState'),
+  toggleExport: document.getElementById('toggleExport'),
   viewportLabel: document.getElementById('viewportLabel'),
   viewportRange: document.getElementById('viewportRange'),
+  cafeExportPanel: document.getElementById('cafeExportPanel'),
 };
 
 function exportArticleHtml(blocks) {
@@ -68,7 +84,7 @@ ${blocks.map(blockToHtml).filter(Boolean).join('\n\n')}
 function blockToHtml(block) {
   if (block.type === 'text') {
     return `<div class="arti-block arti-block--narrow">
-  <p class="basic-p">${lineBreaks(block.text)}</p>
+${textChildrenToArticleHtml(block)}
 </div>`;
   }
 
@@ -195,6 +211,22 @@ function blockEditorHtml(block, index) {
 }
 
 function blockFieldsHtml(block) {
+  if (block.type === 'text') {
+    const textBlock = normalizeTextBlock(block);
+    return `<div class="rich-toolbar" aria-label="Text formatting">
+      <button type="button" data-rich-action="paragraph">문단</button>
+      <button type="button" data-rich-action="subheading">소제목</button>
+      <button type="button" data-rich-action="bold">B</button>
+      <button type="button" data-rich-action="underline">U</button>
+      <button type="button" data-rich-action="externalLink">외부링크</button>
+      <button type="button" data-rich-action="productLink">상품링크</button>
+      <button type="button" data-rich-action="popupLink">팝업링크</button>
+    </div>
+    <div class="rich-editor" contenteditable="true" data-key="children" spellcheck="false">
+      ${textChildrenToEditorHtml(textBlock.children)}
+    </div>`;
+  }
+
   if (block.type === 'image') {
     const imageUrl = normalizeImageUrl(block.src);
     return `<div class="image-grid">
@@ -217,15 +249,45 @@ function blockFieldsHtml(block) {
           <span>Caption</span>
           <input data-key="caption" value="${escapeAttr(block.caption)}">
         </label>
+        <div class="image-actions">
+          <label class="upload-button">
+            Upload
+            <input class="sr-only" type="file" accept="image/*" data-upload-target="image">
+          </label>
+          <button type="button" data-block-action="autoImagePath">Auto path</button>
+        </div>
       </div>
     </div>`;
   }
 
   if (block.type === 'duo') {
-    return `<label class="field">
-      <span>Images, one per line. Use path | caption</span>
-      <textarea data-key="items">${escapeHtml(itemsToLines(block.items))}</textarea>
-    </label>`;
+    const items = normalizeDuoItems(block.items);
+    block.items = items;
+    return `<div class="duo-editor">
+      ${items.map((item, index) => {
+        const imageUrl = normalizeImageUrl(item.src);
+        return `<div class="duo-editor__item" data-duo-index="${index}">
+          <div class="image-thumb"><img src="${escapeAttr(imageUrl)}" alt="" onerror="this.hidden=true"></div>
+          <div class="duo-editor__fields">
+            <label class="field">
+              <span>Image ${index + 1} path or URL</span>
+              <input data-key="duoItem" data-duo-key="src" data-duo-index="${index}" value="${escapeAttr(item.src)}">
+            </label>
+            <label class="field">
+              <span>Image ${index + 1} caption</span>
+              <input data-key="duoItem" data-duo-key="caption" data-duo-index="${index}" value="${escapeAttr(item.caption)}">
+            </label>
+            <div class="image-actions">
+              <label class="upload-button">
+                Upload
+                <input class="sr-only" type="file" accept="image/*" data-upload-target="duo" data-duo-index="${index}">
+              </label>
+              <button type="button" data-duo-action="autoPath" data-duo-index="${index}">Auto path</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
   }
 
   if (block.type === 'slide') {
@@ -258,7 +320,7 @@ function blockFieldsHtml(block) {
   }
 
   return `<label class="field">
-    <span>${block.type === 'heading' ? 'Heading' : block.type === 'quote' ? 'Quote' : 'Text'}</span>
+    <span>${block.type === 'quote' ? 'Quote' : 'Text'}</span>
     <textarea data-key="text">${escapeHtml(block.text)}</textarea>
   </label>`;
 }
@@ -277,6 +339,22 @@ function bindEvents() {
   });
 
   els.blockList.addEventListener('click', event => {
+    const richButton = event.target.closest('[data-rich-action]');
+    if (richButton) {
+      const card = richButton.closest('.block-card');
+      if (!card) return;
+      handleRichAction(card.dataset.id, richButton.dataset.richAction);
+      return;
+    }
+
+    const duoButton = event.target.closest('[data-duo-action]');
+    if (duoButton) {
+      const card = duoButton.closest('.block-card');
+      if (!card) return;
+      handleDuoAction(card.dataset.id, duoButton.dataset.duoAction, Number(duoButton.dataset.duoIndex));
+      return;
+    }
+
     const button = event.target.closest('[data-block-action]');
     if (!button) return;
     const card = button.closest('.block-card');
@@ -291,7 +369,16 @@ function bindEvents() {
     if (!block) return;
 
     const key = event.target.dataset.key;
-    if (key === 'images' || key === 'rows') {
+    if (key === 'children') {
+      block.children = serializeTextEditor(event.target);
+    } else if (key === 'duoItem') {
+      const index = Number(event.target.dataset.duoIndex);
+      const duoKey = event.target.dataset.duoKey;
+      if (!block.items) block.items = normalizeDuoItems([]);
+      if (block.items[index] && ['src', 'caption'].includes(duoKey)) {
+        block.items[index][duoKey] = event.target.value;
+      }
+    } else if (key === 'images' || key === 'rows') {
       block[key] = linesFromText(event.target.value);
     } else if (key === 'items') {
       block[key] = parseMediaItems(event.target.value);
@@ -302,6 +389,20 @@ function bindEvents() {
     markSelected(block.id);
     updatePreview();
     markSaved('Editing');
+  });
+
+  els.blockList.addEventListener('change', event => {
+    const uploadInput = event.target.closest('[data-upload-target]');
+    if (!uploadInput) return;
+    handleImageUpload(uploadInput);
+  });
+
+  els.blockList.addEventListener('paste', event => {
+    const editor = event.target.closest('.rich-editor');
+    if (!editor) return;
+    event.preventDefault();
+    const text = event.clipboardData?.getData('text/plain') || '';
+    document.execCommand('insertText', false, text);
   });
 
   els.blockList.addEventListener('focusin', event => {
@@ -327,6 +428,9 @@ function bindEvents() {
   els.importJson.addEventListener('click', () => els.importJsonInput.click());
   els.importJsonInput.addEventListener('change', importJsonFile);
   els.saveDraft.addEventListener('click', saveDraft);
+  els.toggleExport.addEventListener('click', () => {
+    els.cafeExportPanel.classList.toggle('is-collapsed');
+  });
 
   els.previewFrame.addEventListener('load', () => {
     state.previewReady = true;
@@ -371,11 +475,308 @@ function handleBlockAction(blockId, action) {
     }
     state.blocks.splice(index, 1);
     state.selectedBlockId = state.blocks[Math.max(0, index - 1)].id;
+  } else if (action === 'autoImagePath' && state.blocks[index].type === 'image') {
+    state.blocks[index].src = buildArticleAssetPath(imageSlotName(state.blocks[index]), state.blocks[index].src || 'image.jpg');
   }
 
   renderBlockList();
   updatePreview();
   markSaved('Editing');
+}
+
+function handleDuoAction(blockId, action, itemIndex) {
+  const block = state.blocks.find(item => item.id === blockId);
+  if (!block || block.type !== 'duo') return;
+  block.items = normalizeDuoItems(block.items);
+
+  if (action === 'autoPath' && block.items[itemIndex]) {
+    block.items[itemIndex].src = buildArticleAssetPath(`duo-${itemIndex + 1}`, block.items[itemIndex].src || 'image.jpg');
+  }
+
+  renderBlockList();
+  updatePreview();
+  markSaved('Editing');
+}
+
+async function handleImageUpload(input) {
+  const file = input.files && input.files[0];
+  const card = input.closest('.block-card');
+  if (!file || !card) return;
+
+  const block = state.blocks.find(item => item.id === card.dataset.id);
+  if (!block) return;
+
+  const uploadTarget = input.dataset.uploadTarget;
+  const duoIndex = Number(input.dataset.duoIndex);
+  const slot = uploadTarget === 'duo' ? `duo-${duoIndex + 1}` : imageSlotName(block);
+  const assetPath = buildArticleAssetPath(slot, file.name);
+
+  try {
+    markSaved('Uploading');
+    const result = await uploadImageToR2(file, assetPath);
+    const savedPath = result.path || assetPath;
+
+    if (uploadTarget === 'duo') {
+      block.items = normalizeDuoItems(block.items);
+      if (block.items[duoIndex]) block.items[duoIndex].src = savedPath;
+    } else {
+      block.src = savedPath;
+    }
+
+    renderBlockList();
+    updatePreview();
+    markSaved('Uploaded');
+  } catch (error) {
+    markSaved(error.message || 'Upload failed');
+  } finally {
+    input.value = '';
+  }
+}
+
+async function uploadImageToR2(file, assetPath) {
+  const endpoint = getUploadEndpoint();
+  if (!endpoint) {
+    throw new Error('Deploy to Cloudflare first');
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('key', assetPath.replace(/^\/+/, ''));
+  formData.append('token', els.gasToken.value.trim());
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    body: formData,
+  });
+  const result = await response.json();
+  if (!result.ok) throw new Error(result.error || 'Upload failed');
+  return result;
+}
+
+function getUploadEndpoint() {
+  const isLocal = ['127.0.0.1', 'localhost', ''].includes(window.location.hostname);
+  if (isLocal) return '';
+  if (window.location.hostname.endsWith('.netlify.app')) return '';
+  return '/api/r2-upload';
+}
+
+function buildArticleAssetPath(slot, filename) {
+  const extension = filenameExtension(filename) || 'jpg';
+  const year = articleYear(state.meta.code);
+  const codeSlug = slugArticleCode(state.meta.code);
+  const slotSlug = slugArticleCode(slot);
+  return `/${year}/${codeSlug}/${slotSlug}.${extension}`;
+}
+
+function filenameExtension(filename) {
+  const match = String(filename || '').toLowerCase().match(/\.([a-z0-9]+)(?:\?|#)?$/);
+  if (!match) return '';
+  if (match[1] === 'jpeg') return 'jpg';
+  return match[1].replace(/[^a-z0-9]/g, '');
+}
+
+function articleYear(code) {
+  const match = String(code || '').match(/ARTI(\d{2})/i);
+  if (match) return `20${match[1]}`;
+  return String(new Date().getFullYear());
+}
+
+function imageSlotName(block) {
+  const imageBlocks = state.blocks.filter(item => item.type === 'image');
+  const index = Math.max(0, imageBlocks.indexOf(block));
+  return `image-${index + 1}`;
+}
+
+function handleRichAction(blockId, action) {
+  const card = findBlockCard(blockId);
+  const editor = card?.querySelector('.rich-editor');
+  const block = state.blocks.find(item => item.id === blockId);
+  if (!editor || !block) return;
+
+  editor.focus();
+
+  if (action === 'paragraph' || action === 'subheading') {
+    setCurrentTextNodeType(editor, action);
+  } else if (action === 'bold') {
+    document.execCommand('bold', false);
+  } else if (action === 'underline') {
+    document.execCommand('underline', false);
+  } else if (action === 'externalLink') {
+    const href = window.prompt('외부 링크 URL을 입력하세요.', 'https://');
+    if (href) {
+      insertInlineLink(editor, {
+        href,
+        target: '_blank',
+        rel: 'noopener',
+        'data-link-type': 'external',
+      }, href);
+    }
+  } else if (action === 'productLink') {
+    const productCode = window.prompt('상품코드 또는 상품번호를 입력하세요.', '');
+    if (productCode) {
+      insertInlineLink(editor, {
+        href: '#',
+        'data-link-type': 'product',
+        'data-product-code': productCode,
+      }, productCode);
+    }
+  } else if (action === 'popupLink') {
+    const title = window.prompt('팝업 제목을 입력하세요.', '');
+    if (title) {
+      const content = window.prompt('팝업 내용을 입력하세요.', '');
+      insertInlineLink(editor, {
+        href: '#',
+        'data-link-type': 'popup',
+        'data-popup-title': title,
+        'data-popup-content': content || '',
+      }, title);
+    }
+  }
+
+  ensureRichNodeStructure(editor);
+  block.children = serializeTextEditor(editor);
+  updatePreview();
+  markSaved('Editing');
+}
+
+function findBlockCard(blockId) {
+  return Array.from(els.blockList.querySelectorAll('.block-card'))
+    .find(card => card.dataset.id === blockId);
+}
+
+function setCurrentTextNodeType(editor, type) {
+  const node = getCurrentRichNode(editor);
+  if (!node || !TEXT_NODE_TYPES.includes(type)) return;
+  node.dataset.nodeType = type;
+}
+
+function getCurrentRichNode(editor) {
+  const selection = window.getSelection();
+  const selectedNode = selection && selection.anchorNode;
+  const element = selectedNode && selectedNode.nodeType === Node.ELEMENT_NODE
+    ? selectedNode
+    : selectedNode?.parentElement;
+  return element?.closest?.('.rich-editor__node') || editor.querySelector('.rich-editor__node');
+}
+
+function insertInlineLink(editor, attributes, fallbackLabel) {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return;
+
+  const range = selection.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) return;
+
+  const selectedText = selection.toString().trim();
+  const link = document.createElement('a');
+  Object.entries(attributes).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) link.setAttribute(key, String(value));
+  });
+  link.textContent = selectedText || fallbackLabel || attributes.href || 'link';
+
+  range.deleteContents();
+  range.insertNode(link);
+  range.setStartAfter(link);
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+function normalizeTextBlock(block) {
+  if (Array.isArray(block.children) && block.children.length) {
+    block.children = normalizeTextChildren(block.children);
+    return block;
+  }
+
+  const legacyText = String(block.text || '').trim();
+  block.children = legacyText
+    ? legacyText.split(/\n{2,}/).map(part => ({
+      type: 'paragraph',
+      html: escapeHtml(part.trim()).replace(/\n/g, '<br>'),
+    }))
+    : [{ type: 'paragraph', html: '' }];
+  delete block.text;
+  return block;
+}
+
+function normalizeBlock(block) {
+  const next = Object.assign({}, block, { id: block.id || createBlockId() });
+  if (next.type === 'heading') {
+    return {
+      id: next.id,
+      type: 'text',
+      children: [{ type: 'subheading', html: escapeHtml(next.text || '새 소제목') }],
+    };
+  }
+  if (next.type === 'text') return normalizeTextBlock(next);
+  return next;
+}
+
+function normalizeTextChildren(children) {
+  return (children || []).map(child => ({
+    type: TEXT_NODE_TYPES.includes(child?.type) ? child.type : 'paragraph',
+    html: sanitizeRichHtml(child?.html || ''),
+  })).filter(child => child.html || child.type === 'paragraph');
+}
+
+function textChildrenToArticleHtml(block) {
+  const children = normalizeTextBlock(block).children;
+  return children.map(child => {
+    const html = sanitizeRichHtml(child.html);
+    if (!html) return '';
+    if (child.type === 'subheading') {
+      return `  <h2 class="mid-title">${html}</h2>`;
+    }
+    return `  <p class="basic-p">${html}</p>`;
+  }).filter(Boolean).join('\n');
+}
+
+function textChildrenToEditorHtml(children) {
+  const normalizedChildren = normalizeTextChildren(children);
+  const safeChildren = normalizedChildren.length ? normalizedChildren : [{ type: 'paragraph', html: '<br>' }];
+  return safeChildren.map(child => {
+    const type = TEXT_NODE_TYPES.includes(child.type) ? child.type : 'paragraph';
+    const html = child.html || '<br>';
+    return `<div class="rich-editor__node" data-node-type="${escapeAttr(type)}">${html}</div>`;
+  }).join('');
+}
+
+function serializeTextEditor(editor) {
+  ensureRichNodeStructure(editor);
+  const children = Array.from(editor.querySelectorAll('.rich-editor__node')).map(node => ({
+    type: TEXT_NODE_TYPES.includes(node.dataset.nodeType) ? node.dataset.nodeType : 'paragraph',
+    html: sanitizeRichHtml(node.innerHTML),
+  })).filter(child => child.html);
+
+  return children.length ? children : [{ type: 'paragraph', html: '' }];
+}
+
+function ensureRichNodeStructure(editor) {
+  const childNodes = Array.from(editor.childNodes);
+  const elementChildren = Array.from(editor.children);
+  const isAlreadyStructured = elementChildren.length > 0
+    && elementChildren.length === childNodes.filter(node => node.nodeType === Node.ELEMENT_NODE).length
+    && elementChildren.every(child => child.classList?.contains('rich-editor__node'));
+  if (isAlreadyStructured) return;
+
+  const normalizedHtml = childNodes.map(node => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent.trim();
+      return text ? `<div class="rich-editor__node" data-node-type="paragraph">${escapeHtml(text)}</div>` : '';
+    }
+
+    if (node.nodeType !== Node.ELEMENT_NODE) return '';
+
+    const element = node;
+    if (element.classList.contains('rich-editor__node')) {
+      const type = TEXT_NODE_TYPES.includes(element.dataset.nodeType) ? element.dataset.nodeType : 'paragraph';
+      return `<div class="rich-editor__node" data-node-type="${escapeAttr(type)}">${sanitizeRichHtml(element.innerHTML) || '<br>'}</div>`;
+    }
+
+    const html = sanitizeRichHtml(element.innerHTML || element.textContent || '');
+    return html ? `<div class="rich-editor__node" data-node-type="paragraph">${html}</div>` : '';
+  }).filter(Boolean).join('');
+
+  editor.innerHTML = normalizedHtml || '<div class="rich-editor__node" data-node-type="paragraph"><br></div>';
 }
 
 function cloneBlock(block) {
@@ -436,10 +837,26 @@ function createBlock(type) {
     };
   }
 
+  if (type === 'text') {
+    return {
+      id,
+      type,
+      children: [{ type: 'paragraph', html: '본문을 입력하세요.' }],
+    };
+  }
+
+  if (type === 'heading') {
+    return {
+      id,
+      type: 'text',
+      children: [{ type: 'subheading', html: '새 소제목' }],
+    };
+  }
+
   return {
     id,
     type,
-    text: type === 'heading' ? '새 소제목' : type === 'quote' ? '강조하고 싶은 문장을 입력하세요.' : '본문을 입력하세요.',
+    text: type === 'quote' ? '강조하고 싶은 문장을 입력하세요.' : '본문을 입력하세요.',
   };
 }
 
@@ -560,7 +977,7 @@ function importJsonFile(event) {
 
 function buildEditorPayload() {
   return {
-    version: 2,
+    version: 3,
     updatedAt: new Date().toISOString(),
     meta: Object.assign({}, state.meta),
     blocks: JSON.parse(JSON.stringify(state.blocks)),
@@ -574,7 +991,7 @@ function applyEditorPayload(payload) {
   }
 
   state.meta = Object.assign({}, state.meta, payload.meta);
-  state.blocks = payload.blocks.map(block => Object.assign({}, block, { id: block.id || createBlockId() }));
+  state.blocks = payload.blocks.map(normalizeBlock);
   state.selectedBlockId = state.blocks[0] ? state.blocks[0].id : '';
   syncInputsFromMeta();
   renderBlockList();
@@ -706,6 +1123,21 @@ function parseMediaItems(value) {
   });
 }
 
+function normalizeDuoItems(items) {
+  const normalized = (items || []).slice(0, 2).map(item => ({
+    src: item?.src || '',
+    caption: item?.caption || '',
+  }));
+  while (normalized.length < 2) {
+    const index = normalized.length;
+    normalized.push({
+      src: buildArticleAssetPath(`duo-${index + 1}`, 'image.jpg'),
+      caption: '',
+    });
+  }
+  return normalized;
+}
+
 function itemsToLines(items) {
   return (items || []).map(item => [item.src, item.caption].filter(Boolean).join(' | ')).join('\n');
 }
@@ -728,6 +1160,76 @@ function slugArticleCode(code) {
 function captionHtml(caption, className = '') {
   return caption ? `
     <p class="arti-caption${className ? ` ${escapeAttr(className)}` : ''}">${escapeHtml(caption)}</p>` : '';
+}
+
+function sanitizeRichHtml(value) {
+  const template = document.createElement('template');
+  template.innerHTML = String(value || '');
+  cleanRichNode(template.content);
+  return template.innerHTML.trim();
+}
+
+function cleanRichNode(parent) {
+  Array.from(parent.childNodes).forEach(node => {
+    if (node.nodeType === Node.TEXT_NODE) return;
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      node.remove();
+      return;
+    }
+
+    const element = node;
+    const tag = element.tagName.toLowerCase();
+    if (['script', 'style'].includes(tag)) {
+      element.remove();
+      return;
+    }
+
+    if (!['a', 'b', 'br', 'strong', 'u'].includes(tag)) {
+      cleanRichNode(element);
+      unwrapElement(element);
+      return;
+    }
+
+    cleanRichNode(element);
+
+    if (tag === 'a') {
+      const allowedAttributes = new Map();
+      const href = element.getAttribute('href') || '#';
+      allowedAttributes.set('href', safeHref(href) ? href : '#');
+
+      ['target', 'rel', 'data-link-type', 'data-product-code', 'data-product-no', 'data-popup-title', 'data-popup-content'].forEach(name => {
+        const value = element.getAttribute(name);
+        if (value) allowedAttributes.set(name, value);
+      });
+
+      Array.from(element.attributes).forEach(attribute => element.removeAttribute(attribute.name));
+      allowedAttributes.forEach((attrValue, attrName) => element.setAttribute(attrName, attrValue));
+      if (element.getAttribute('target') === '_blank' && !element.getAttribute('rel')) {
+        element.setAttribute('rel', 'noopener');
+      }
+      return;
+    }
+
+    Array.from(element.attributes).forEach(attribute => element.removeAttribute(attribute.name));
+  });
+}
+
+function unwrapElement(element) {
+  while (element.firstChild) {
+    element.parentNode.insertBefore(element.firstChild, element);
+  }
+  element.remove();
+}
+
+function safeHref(href) {
+  const value = String(href || '').trim();
+  if (value === '#') return true;
+  try {
+    const parsed = new URL(value, window.location.origin);
+    return ['http:', 'https:', 'mailto:', 'tel:'].includes(parsed.protocol);
+  } catch (error) {
+    return false;
+  }
 }
 
 function lineBreaks(value) {

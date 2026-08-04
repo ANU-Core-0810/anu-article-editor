@@ -61,6 +61,7 @@
           <button class="plain-button" type="button" id="importJson">Import JSON</button>
           <button class="plain-button" type="button" id="copyJson">Copy JSON</button>
           <button class="plain-button" type="button" id="copyHtml">Copy HTML</button>
+          <button class="plain-button" type="button" id="toggleExport">Export</button>
           <button class="primary-button" type="button" id="saveDraft">Save</button>
           <input id="importJsonInput" class="sr-only" type="file" accept="application/json,.json">
         </div>
@@ -104,7 +105,6 @@
               <h2>Blocks</h2>
               <div class="block-tools" aria-label="Add block">
                 <button type="button" data-add="text">Text</button>
-                <button type="button" data-add="heading">Heading</button>
                 <button type="button" data-add="image">Image</button>
                 <button type="button" data-add="duo">Duo</button>
                 <button type="button" data-add="quote">Quote</button>
@@ -116,7 +116,7 @@
             <div id="blockList" class="block-list" aria-live="polite"></div>
           </section>
 
-          <section class="panel">
+          <section class="panel export-panel is-collapsed" id="cafeExportPanel">
             <div class="panel__head">
               <h2>Cafe24 Export</h2>
               <span id="gasState" class="panel-state">Ready</span>
