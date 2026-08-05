@@ -5,6 +5,18 @@ const IMAGE_LAYOUTS = ['title-img-f', 'title-img-m', 'img-s', 'img-m', 'img-l'];
 const DUO_LAYOUTS = ['title-img-duo', 'img-s-duo', 'img-m-duo'];
 const TEXT_BLOCK_TYPES = ['text', 'quote', 'credit'];
 const MEDIA_BLOCK_TYPES = ['image', 'duo', 'slide', 'video'];
+const IMAGE_LAYOUT_LABELS = {
+  'title-img-f': '타이틀 전체 이미지 - PC/Mobile 분리',
+  'title-img-m': '타이틀 중형 이미지',
+  'img-s': '본문 소형 이미지',
+  'img-m': '본문 중형 이미지',
+  'img-l': '본문 전체 이미지',
+};
+const DUO_LAYOUT_LABELS = {
+  'title-img-duo': '타이틀 듀오 이미지',
+  'img-s-duo': '본문 소형 듀오',
+  'img-m-duo': '본문 중형 듀오',
+};
 let activeRichLink = null;
 let activeLinkEditor = null;
 let draggedBlockId = '';
@@ -301,8 +313,8 @@ function blockLabel(block) {
     text: '텍스트',
     quote: '인용',
     credit: '크레딧',
-    image: block.layout || '이미지',
-    duo: block.layout || '듀오',
+    image: IMAGE_LAYOUT_LABELS[block.layout] || block.layout || '이미지',
+    duo: DUO_LAYOUT_LABELS[block.layout] || block.layout || '듀오',
     slide: '슬라이드',
     video: block.videoType === 'video-mp4' ? '비디오' : '유튜브',
   };
@@ -314,6 +326,7 @@ function uploadTileHtml({ src, target, label, attrs = '' }) {
   return `<label class="image-thumb image-upload-tile">
     <img src="${escapeAttr(imageUrl)}" alt="" onerror="this.hidden=true">
     <span class="image-upload-tile__label">${iconHtml('upload-cloud')}${escapeHtml(label)}</span>
+    <small>클릭하거나 파일을 끌어놓기</small>
     <input class="sr-only" type="file" accept="image/*" data-upload-target="${escapeAttr(target)}"${attrs ? ` ${attrs}` : ''}>
   </label>`;
 }
@@ -365,7 +378,7 @@ function blockFieldsHtml(block) {
             <label class="field">
               <span>레이아웃</span>
               <select data-key="layout">
-                ${IMAGE_LAYOUTS.map(value => optionHtml(value, block.layout)).join('')}
+                ${IMAGE_LAYOUTS.map(value => optionHtml(value, block.layout, IMAGE_LAYOUT_LABELS[value] || value)).join('')}
               </select>
             </label>
             <button class="ui-button ui-button--secondary field-button" type="button" data-block-action="autoImagePath">${iconHtml('route')}자동 경로</button>
@@ -393,7 +406,7 @@ function blockFieldsHtml(block) {
       <label class="field">
         <span>듀오 레이아웃</span>
         <select data-key="layout">
-          ${DUO_LAYOUTS.map(value => optionHtml(value, block.layout || 'img-m-duo')).join('')}
+          ${DUO_LAYOUTS.map(value => optionHtml(value, block.layout || 'img-m-duo', DUO_LAYOUT_LABELS[value] || value)).join('')}
         </select>
       </label>
       ${items.map((item, index) => {
@@ -610,6 +623,29 @@ function bindEvents() {
     if (event.target.dataset.key) {
       event.target.dispatchEvent(new Event('input', { bubbles: true }));
     }
+  });
+
+  els.blockList.addEventListener('dragover', event => {
+    const tile = event.target.closest('.image-upload-tile');
+    if (!tile) return;
+    event.preventDefault();
+    tile.classList.add('is-drag-over');
+  });
+
+  els.blockList.addEventListener('dragleave', event => {
+    const tile = event.target.closest('.image-upload-tile');
+    if (!tile || tile.contains(event.relatedTarget)) return;
+    tile.classList.remove('is-drag-over');
+  });
+
+  els.blockList.addEventListener('drop', event => {
+    const tile = event.target.closest('.image-upload-tile');
+    if (!tile) return;
+    event.preventDefault();
+    tile.classList.remove('is-drag-over');
+    const input = tile.querySelector('[data-upload-target]');
+    const file = Array.from(event.dataTransfer?.files || []).find(item => item.type.startsWith('image/'));
+    if (input && file) handleImageUpload(input, file);
   });
 
   els.blockList.addEventListener('mouseover', event => {
@@ -949,8 +985,8 @@ function handleSlideAction(blockId, action, imageIndex) {
   markSaved('Editing');
 }
 
-async function handleImageUpload(input) {
-  const file = input.files && input.files[0];
+async function handleImageUpload(input, droppedFile = null) {
+  const file = droppedFile || (input.files && input.files[0]);
   const card = input.closest('.block-card');
   if (!file || !card) return;
 
@@ -969,23 +1005,22 @@ async function handleImageUpload(input) {
         ? `${imageSlotName(block)}-mobile`
         : imageSlotName(block);
   const assetPath = buildArticleAssetPath(slot, file.name);
+  const endpoint = getUploadEndpoint();
+
+  if (!endpoint) {
+    assignUploadedImagePath(block, uploadTarget, assetPath, duoIndex, slideIndex);
+    renderBlockList();
+    updatePreview();
+    markSaved('Path ready');
+    input.value = '';
+    return;
+  }
 
   try {
     markSaved('Uploading');
-    const result = await uploadImageToR2(file, assetPath);
+    const result = await uploadImageToR2(file, assetPath, endpoint);
     const savedPath = result.path || assetPath;
-
-    if (uploadTarget === 'duo') {
-      block.items = normalizeDuoItems(block.items);
-      if (block.items[duoIndex]) block.items[duoIndex].src = savedPath;
-    } else if (uploadTarget === 'slide') {
-      block.images = normalizeSlideImages(block.images);
-      if (block.images[slideIndex] !== undefined) block.images[slideIndex] = savedPath;
-    } else if (uploadTarget === 'imageMobile') {
-      block.mobileSrc = savedPath;
-    } else {
-      block.src = savedPath;
-    }
+    assignUploadedImagePath(block, uploadTarget, savedPath, duoIndex, slideIndex);
 
     renderBlockList();
     updatePreview();
@@ -997,12 +1032,21 @@ async function handleImageUpload(input) {
   }
 }
 
-async function uploadImageToR2(file, assetPath) {
-  const endpoint = getUploadEndpoint();
-  if (!endpoint) {
-    throw new Error('Deploy to Cloudflare first');
+function assignUploadedImagePath(block, uploadTarget, savedPath, duoIndex, slideIndex) {
+  if (uploadTarget === 'duo') {
+    block.items = normalizeDuoItems(block.items);
+    if (block.items[duoIndex]) block.items[duoIndex].src = savedPath;
+  } else if (uploadTarget === 'slide') {
+    block.images = normalizeSlideImages(block.images);
+    if (block.images[slideIndex] !== undefined) block.images[slideIndex] = savedPath;
+  } else if (uploadTarget === 'imageMobile') {
+    block.mobileSrc = savedPath;
+  } else {
+    block.src = savedPath;
   }
+}
 
+async function uploadImageToR2(file, assetPath, endpoint = getUploadEndpoint()) {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('key', assetPath.replace(/^\/+/, ''));
@@ -2120,6 +2164,7 @@ function statusLabel(label) {
     'Loaded': '불러옴',
     'Load failed': '불러오기 실패',
     'Loading': '불러오는 중',
+    'Path ready': '경로 생성됨',
     'Ready': '준비됨',
     'Running': '실행 중',
     'Saved': '저장됨',

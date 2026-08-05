@@ -48,75 +48,6 @@
       text-rendering: optimizeLegibility;
     }
 
-    .preview-site-promo {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 34px;
-      background: #ddd;
-      color: #111;
-      font-family: var(--font-pretendard, "Pretendard Variable", sans-serif);
-      font-size: 13px;
-      font-weight: 700;
-      line-height: 1;
-      position: relative;
-    }
-
-    .preview-site-promo button {
-      position: absolute;
-      top: 50%;
-      right: 12px;
-      width: 22px;
-      height: 22px;
-      border: 0;
-      background: transparent;
-      color: #111;
-      padding: 0;
-      font-size: 24px;
-      line-height: 1;
-      transform: translateY(-50%);
-    }
-
-    .preview-site-header {
-      display: grid;
-      grid-template-columns: minmax(180px, 1fr) auto minmax(180px, 1fr);
-      align-items: start;
-      min-height: 95px;
-      padding: 21px 44px 0;
-      background: #fff;
-      color: #111;
-    }
-
-    .preview-site-logo {
-      font-family: var(--font-akkurat, "AkkuratLLWeb", sans-serif);
-      width: 174px;
-      font-size: 78px;
-      font-weight: 700;
-      line-height: 0.74;
-      letter-spacing: 0;
-    }
-
-    .preview-site-nav,
-    .preview-site-actions {
-      display: flex;
-      gap: 44px;
-      padding-top: 27px;
-      font-family: var(--font-akkurat, "AkkuratLLWeb", sans-serif);
-      font-size: 16px;
-      font-weight: 400;
-      line-height: 1.2;
-      white-space: nowrap;
-    }
-
-    .preview-site-actions {
-      justify-content: flex-end;
-      gap: 26px;
-    }
-
-    .preview-mobile-actions {
-      display: none;
-    }
-
     .preview-shell {
       overflow: hidden;
       padding: 124px 0 124px;
@@ -258,78 +189,6 @@
     }
 
     @media (max-width: 767px) {
-      .preview-site-promo {
-        min-height: 34px;
-        font-size: 13px;
-      }
-
-      .preview-site-promo button {
-        right: 10px;
-        font-size: 30px;
-      }
-
-      .preview-site-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        min-height: 63px;
-        padding: 21px 16px 0;
-      }
-
-      .preview-site-logo {
-        width: 78px;
-        font-size: 47px;
-        line-height: 0.68;
-      }
-
-      .preview-site-nav,
-      .preview-site-actions {
-        display: none;
-      }
-
-      .preview-mobile-actions {
-        display: flex;
-        align-items: center;
-        gap: 18px;
-        padding-top: 7px;
-      }
-
-      .preview-mobile-cart {
-        position: relative;
-        width: 28px;
-        height: 30px;
-        border: 2px solid #111;
-        border-top: 0;
-        font-family: var(--font-akkurat, "AkkuratLLWeb", sans-serif);
-        font-size: 12px;
-        line-height: 30px;
-        text-align: center;
-      }
-
-      .preview-mobile-cart::before {
-        position: absolute;
-        top: -8px;
-        left: 7px;
-        width: 10px;
-        height: 10px;
-        border: 2px solid #111;
-        border-bottom: 0;
-        border-radius: 999px 999px 0 0;
-        content: "";
-      }
-
-      .preview-mobile-menu {
-        display: grid;
-        width: 30px;
-        gap: 7px;
-      }
-
-      .preview-mobile-menu span {
-        display: block;
-        height: 2px;
-        background: #111;
-      }
-
       .preview-shell {
         padding: 44px 0 84px;
       }
@@ -393,29 +252,6 @@
   </style>
 </head>
 <body>
-  <header class="preview-site">
-    <div class="preview-site-promo">
-      <span>5주년 기념 최대 50% 할인</span>
-      <button type="button" aria-label="닫기">×</button>
-    </div>
-    <div class="preview-site-header">
-      <div class="preview-site-logo" aria-label="anu">anu</div>
-      <nav class="preview-site-nav" aria-label="주요 메뉴">
-        <span>Shop</span>
-        <span>Article</span>
-        <span>Support</span>
-        <span>Search</span>
-      </nav>
-      <div class="preview-site-actions">
-        <span>Login</span>
-        <span>Cart (0)</span>
-      </div>
-      <div class="preview-mobile-actions" aria-hidden="true">
-        <span class="preview-mobile-cart">0</span>
-        <span class="preview-mobile-menu"><span></span><span></span><span></span></span>
-      </div>
-    </div>
-  </header>
   <main class="preview-shell">
     <section class="preview-hero">
       <div class="preview-title-column">
