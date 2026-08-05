@@ -55,6 +55,14 @@
             <span>노션 아티클</span>
           </div>
         </div>
+        <div class="sidebar__actions">
+          <button class="icon-button" type="button" id="loadArticles" aria-label="노션 아티클 불러오기">
+            <i data-lucide="refresh-cw" aria-hidden="true"></i>
+          </button>
+          <button class="icon-button" type="button" id="toggleSidebar" aria-label="아티클 목록 접기">
+            <i data-lucide="panel-left-close" aria-hidden="true"></i>
+          </button>
+        </div>
       </header>
 
       <label class="search-field">
@@ -82,6 +90,7 @@
           <em>업데이트</em>
         </button>
       </nav>
+      <div class="sidebar-resize-handle" id="sidebarResizeHandle" aria-hidden="true"></div>
     </aside>
 
     <section class="editor" aria-label="아티클 편집기">
@@ -96,13 +105,9 @@
         </div>
 
         <div class="topbar__actions">
-          <button class="ui-button ui-button--ghost" type="button" id="toggleSidebar" aria-label="아티클 목록 열고 닫기">
+          <button class="ui-button ui-button--ghost sidebar-reopen" type="button" id="reopenSidebar" aria-label="아티클 목록 열기">
             <i data-lucide="panel-left" aria-hidden="true"></i>
             <span>목록</span>
-          </button>
-          <button class="ui-button ui-button--secondary" type="button" id="loadArticles">
-            <i data-lucide="refresh-cw" aria-hidden="true"></i>
-            <span>불러오기</span>
           </button>
           <button class="ui-button ui-button--secondary" type="button" id="toggleMeta" aria-expanded="false">
             <i data-lucide="sliders-horizontal" aria-hidden="true"></i>
@@ -295,6 +300,8 @@
               <div class="pipeline-actions">
                 <button class="ui-button ui-button--secondary" type="button" data-gas-action="saveEditorData"><i data-lucide="database" aria-hidden="true"></i>Notion 저장</button>
                 <button class="ui-button ui-button--secondary" type="button" data-gas-action="runAll"><i data-lucide="play" aria-hidden="true"></i>전체 실행</button>
+                <button class="ui-button ui-button--secondary" type="button" data-gas-action="buildRegistration"><i data-lucide="sheet" aria-hidden="true"></i>등록 시트</button>
+                <button class="ui-button ui-button--secondary" type="button" data-gas-action="buildUpdate"><i data-lucide="table-2" aria-hidden="true"></i>수정 시트</button>
                 <button class="ui-button ui-button--secondary" type="button" data-gas-action="exportRegistrationCsv"><i data-lucide="file-plus-2" aria-hidden="true"></i>등록 CSV</button>
                 <button class="ui-button ui-button--secondary" type="button" data-gas-action="exportUpdateCsv"><i data-lucide="file-pen-line" aria-hidden="true"></i>수정 CSV</button>
               </div>

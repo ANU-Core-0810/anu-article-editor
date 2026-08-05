@@ -20,8 +20,11 @@ const DUO_LAYOUT_LABELS = {
 };
 let activeRichLink = null;
 let activeLinkEditor = null;
+let activeRichRange = null;
+let activeRichEditor = null;
 let draggedBlockId = '';
 let draftAutosaveTimer = 0;
+let renderWithLocalImagePreviews = false;
 let nextBlockNumber = 4;
 
 const state = {
@@ -33,6 +36,7 @@ const state = {
   articleQuery: '',
   articleStatusFilter: 'all',
   notionDiagnostics: null,
+  imagePreviews: {},
   meta: {
     englishTitle: 'What Makes a Good Bowl',
     koreanTitle: '손의 경험 | 좋은 보울을 만드는 요소',
@@ -123,6 +127,8 @@ const els = {
   publishToday: document.getElementById('publishToday'),
   saveDraft: document.getElementById('saveDraft'),
   saveState: document.getElementById('saveState'),
+  reopenSidebar: document.getElementById('reopenSidebar'),
+  sidebarResizeHandle: document.getElementById('sidebarResizeHandle'),
   toggleComposerFloat: document.getElementById('toggleComposerFloat'),
   toggleExport: document.getElementById('toggleExport'),
   toggleMeta: document.getElementById('toggleMeta'),
@@ -138,6 +144,15 @@ function exportArticleHtml(blocks) {
   return `<div class="arti-body">
 ${blocks.map(blockToHtml).filter(Boolean).join('\n\n')}
 </div>`;
+}
+
+function exportPreviewArticleHtml(blocks) {
+  renderWithLocalImagePreviews = true;
+  try {
+    return exportArticleHtml(blocks);
+  } finally {
+    renderWithLocalImagePreviews = false;
+  }
 }
 
 function blockToHtml(block) {
@@ -326,9 +341,10 @@ function blockLabel(block) {
 }
 
 function uploadTileHtml({ src, target, label, attrs = '' }) {
-  const imageUrl = normalizeImageUrl(src);
+  const imageUrl = editorImagePreviewUrl(src);
+  const hasImage = Boolean(src);
   return `<label class="image-thumb image-upload-tile">
-    <img src="${escapeAttr(imageUrl)}" alt="" onerror="this.hidden=true">
+    <img src="${escapeAttr(imageUrl)}" alt=""${hasImage ? '' : ' hidden'} onerror="this.hidden=true">
     <span class="image-upload-tile__label">${iconHtml('upload-cloud')}${escapeHtml(label)}</span>
     <small>클릭하거나 파일을 끌어놓기</small>
     <input class="sr-only" type="file" accept="image/*" data-upload-target="${escapeAttr(target)}"${attrs ? ` ${attrs}` : ''}>
@@ -546,6 +562,12 @@ function bindEvents() {
     handleBlockAction(card.dataset.id, button.dataset.blockAction);
   });
 
+  els.blockList.addEventListener('mousedown', event => {
+    if (!event.target.closest('[data-rich-action], [data-caption-rich-action]')) return;
+    event.preventDefault();
+    rememberActiveRichSelection();
+  });
+
   els.blockList.addEventListener('dragstart', event => {
     if (!event.target.closest('.drag-handle')) return;
     const card = event.target.closest('.block-card');
@@ -681,6 +703,8 @@ function bindEvents() {
     if (event.target.matches('[data-link-field="type"]')) updateLinkEditorFields();
   });
 
+  document.addEventListener('selectionchange', rememberActiveRichSelection);
+
   els.blockList.addEventListener('paste', event => {
     const editor = event.target.closest('.rich-editor, .rich-caption-editor');
     if (!editor) return;
@@ -692,6 +716,7 @@ function bindEvents() {
   els.blockList.addEventListener('focusin', event => {
     const card = event.target.closest('.block-card');
     if (card) markSelected(card.dataset.id);
+    if (event.target.closest('.rich-editor, .rich-caption-editor')) rememberActiveRichSelection();
   });
 
   document.querySelectorAll('.segmented--preview button').forEach(button => {
@@ -744,7 +769,9 @@ function bindEvents() {
   els.toggleComposerFloat.addEventListener('click', () => setComposerFloating(!document.body.classList.contains('composer-floating')));
   els.closeExport.addEventListener('click', () => setExportOpen(false));
   els.toggleExport.addEventListener('click', () => setExportOpen(els.cafeExportPanel.classList.contains('is-collapsed')));
-  els.toggleSidebar.addEventListener('click', () => document.body.classList.toggle('sidebar-collapsed'));
+  els.toggleSidebar.addEventListener('click', () => setSidebarCollapsed(true));
+  els.reopenSidebar.addEventListener('click', () => setSidebarCollapsed(false));
+  bindSidebarResize();
 
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && !els.cafeExportPanel.classList.contains('is-collapsed')) {
@@ -946,19 +973,21 @@ function handleCaptionRichAction(blockId, action, button) {
   const block = state.blocks.find(item => item.id === blockId);
   if (!editor || !block) return;
 
+  const range = getStoredEditorRange(editor);
   editor.focus();
+  restoreEditorRange(editor, range);
   if (action === 'bold') {
     document.execCommand('bold', false);
   } else if (action === 'underline') {
     document.execCommand('underline', false);
   } else if (action === 'externalLink') {
-    showLinkEditor({ editor, type: 'external', range: captureEditorRange(editor) });
+    showLinkEditor({ editor, type: 'external', range: getStoredEditorRange(editor) || captureEditorRange(editor) });
     return;
   } else if (action === 'productLink') {
-    showLinkEditor({ editor, type: 'product', range: captureEditorRange(editor) });
+    showLinkEditor({ editor, type: 'product', range: getStoredEditorRange(editor) || captureEditorRange(editor) });
     return;
   } else if (action === 'popupLink') {
-    showLinkEditor({ editor, type: 'popup', range: captureEditorRange(editor) });
+    showLinkEditor({ editor, type: 'popup', range: getStoredEditorRange(editor) || captureEditorRange(editor) });
     return;
   }
 
@@ -1013,12 +1042,13 @@ async function handleImageUpload(input, droppedFile = null) {
         : imageSlotName(block);
   const assetPath = buildArticleAssetPath(slot, file.name);
   const endpoint = getUploadEndpoint();
+  setLocalImagePreview(assetPath, file);
+  assignUploadedImagePath(block, uploadTarget, assetPath, duoIndex, slideIndex);
+  renderBlockList();
+  updatePreview();
+  persistDraft();
 
   if (!endpoint) {
-    assignUploadedImagePath(block, uploadTarget, assetPath, duoIndex, slideIndex);
-    renderBlockList();
-    updatePreview();
-    persistDraft();
     markSaved('Path ready');
     input.value = '';
     return;
@@ -1028,6 +1058,7 @@ async function handleImageUpload(input, droppedFile = null) {
     markSaved('Uploading');
     const result = await uploadImageToR2(file, assetPath, endpoint);
     const savedPath = result.path || assetPath;
+    if (savedPath !== assetPath) moveLocalImagePreview(assetPath, savedPath);
     assignUploadedImagePath(block, uploadTarget, savedPath, duoIndex, slideIndex);
 
     renderBlockList();
@@ -1053,6 +1084,26 @@ function assignUploadedImagePath(block, uploadTarget, savedPath, duoIndex, slide
   } else {
     block.src = savedPath;
   }
+}
+
+function setLocalImagePreview(path, file) {
+  const key = String(path || '');
+  if (!key || !file) return;
+  if (state.imagePreviews[key]) URL.revokeObjectURL(state.imagePreviews[key]);
+  state.imagePreviews[key] = URL.createObjectURL(file);
+}
+
+function moveLocalImagePreview(fromPath, toPath) {
+  const fromKey = String(fromPath || '');
+  const toKey = String(toPath || '');
+  if (!fromKey || !toKey || fromKey === toKey || !state.imagePreviews[fromKey]) return;
+  state.imagePreviews[toKey] = state.imagePreviews[fromKey];
+  delete state.imagePreviews[fromKey];
+}
+
+function editorImagePreviewUrl(value) {
+  const path = String(value || '').trim();
+  return state.imagePreviews[path] || normalizeImageUrl(path);
 }
 
 async function uploadImageToR2(file, assetPath, endpoint = getUploadEndpoint()) {
@@ -1121,7 +1172,9 @@ function handleRichAction(blockId, action) {
   const block = state.blocks.find(item => item.id === blockId);
   if (!editor || !block) return;
 
+  const range = getStoredEditorRange(editor);
   editor.focus();
+  restoreEditorRange(editor, range);
 
   if (action === 'paragraph' || action === 'subheading') {
     setCurrentTextNodeType(editor, action);
@@ -1130,13 +1183,13 @@ function handleRichAction(blockId, action) {
   } else if (action === 'underline') {
     document.execCommand('underline', false);
   } else if (action === 'externalLink') {
-    showLinkEditor({ editor, type: 'external', range: captureEditorRange(editor) });
+    showLinkEditor({ editor, type: 'external', range: getStoredEditorRange(editor) || captureEditorRange(editor) });
     return;
   } else if (action === 'productLink') {
-    showLinkEditor({ editor, type: 'product', range: captureEditorRange(editor) });
+    showLinkEditor({ editor, type: 'product', range: getStoredEditorRange(editor) || captureEditorRange(editor) });
     return;
   } else if (action === 'popupLink') {
-    showLinkEditor({ editor, type: 'popup', range: captureEditorRange(editor) });
+    showLinkEditor({ editor, type: 'popup', range: getStoredEditorRange(editor) || captureEditorRange(editor) });
     return;
   }
 
@@ -1441,6 +1494,32 @@ function captureEditorRange(editor) {
   return range.cloneRange();
 }
 
+function rememberActiveRichSelection() {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return;
+  const range = selection.getRangeAt(0);
+  const node = range.commonAncestorContainer;
+  const element = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
+  const editor = element?.closest?.('.rich-editor, .rich-caption-editor');
+  if (!editor) return;
+  activeRichEditor = editor;
+  activeRichRange = range.cloneRange();
+}
+
+function getStoredEditorRange(editor) {
+  if (!editor || activeRichEditor !== editor || !activeRichRange) return null;
+  if (!editor.contains(activeRichRange.commonAncestorContainer)) return null;
+  return activeRichRange.cloneRange();
+}
+
+function restoreEditorRange(editor, range) {
+  if (!editor || !range) return;
+  const selection = window.getSelection();
+  if (!selection || !editor.contains(range.commonAncestorContainer)) return;
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
 function insertInlineLink(editor, attributes, fallbackLabel, rangeOverride = null) {
   const selection = window.getSelection();
   if (!selection) return;
@@ -1676,7 +1755,7 @@ function syncMetaFromInputs() {
 function updatePreview() {
   const payload = {
     meta: state.meta,
-    html: exportArticleHtml(state.blocks),
+    html: exportPreviewArticleHtml(state.blocks),
   };
 
   if (!state.previewReady || !els.previewFrame.contentWindow) return;
@@ -1828,6 +1907,44 @@ function setComposerFloating(isFloating) {
     composer.style.height = '';
   }
   fitPreviewFrame();
+}
+
+function setSidebarCollapsed(collapsed) {
+  document.body.classList.toggle('sidebar-collapsed', collapsed);
+  fitPreviewFrame();
+}
+
+function bindSidebarResize() {
+  const handle = els.sidebarResizeHandle;
+  if (!handle) return;
+
+  let resize = null;
+  handle.addEventListener('pointerdown', event => {
+    if (document.body.classList.contains('sidebar-collapsed')) return;
+    resize = { pointerId: event.pointerId };
+    document.body.classList.add('is-resizing-sidebar');
+    handle.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  });
+
+  handle.addEventListener('pointermove', event => {
+    if (!resize || resize.pointerId !== event.pointerId) return;
+    const nextWidth = Math.max(220, Math.min(420, event.clientX));
+    document.documentElement.style.setProperty('--sidebar-width', `${nextWidth}px`);
+    fitPreviewFrame();
+  });
+
+  handle.addEventListener('pointerup', event => {
+    if (!resize || resize.pointerId !== event.pointerId) return;
+    resize = null;
+    document.body.classList.remove('is-resizing-sidebar');
+    handle.releasePointerCapture(event.pointerId);
+  });
+
+  handle.addEventListener('pointercancel', () => {
+    resize = null;
+    document.body.classList.remove('is-resizing-sidebar');
+  });
 }
 
 function markSelected(blockId) {
@@ -2371,6 +2488,7 @@ function itemsToLines(items) {
 
 function normalizeImageUrl(value) {
   const trimmed = String(value || '').trim();
+  if (renderWithLocalImagePreviews && state.imagePreviews[trimmed]) return state.imagePreviews[trimmed];
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
   if (trimmed.startsWith('/')) return `${ARTICLE_IMAGE_BASE}${trimmed}`;
   return trimmed;
