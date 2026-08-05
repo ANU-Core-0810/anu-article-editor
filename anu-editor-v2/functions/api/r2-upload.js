@@ -1,6 +1,7 @@
 export async function onRequestPost(context) {
   const { request, env } = context;
   const bucket = env.ANU_ARTICLE_BUCKET;
+  const maxUploadBytes = Number(env.R2_UPLOAD_MAX_BYTES || 25 * 1024 * 1024);
 
   if (!bucket) {
     return json(500, { ok: false, error: 'Missing ANU_ARTICLE_BUCKET R2 binding' });
@@ -24,6 +25,12 @@ export async function onRequestPost(context) {
   if (!file || typeof file === 'string') {
     return json(400, { ok: false, error: 'Missing upload file' });
   }
+  if (!String(file.type || '').startsWith('image/')) {
+    return json(415, { ok: false, error: 'Only image uploads are allowed' });
+  }
+  if (file.size > maxUploadBytes) {
+    return json(413, { ok: false, error: `Image is larger than ${Math.round(maxUploadBytes / 1024 / 1024)}MB` });
+  }
   if (!key) {
     return json(400, { ok: false, error: 'Missing upload key' });
   }
@@ -32,6 +39,11 @@ export async function onRequestPost(context) {
     await bucket.put(key, file.stream(), {
       httpMetadata: {
         contentType: file.type || 'application/octet-stream',
+        cacheControl: 'public, max-age=31536000, immutable',
+      },
+      customMetadata: {
+        source: 'anu-article-editor',
+        originalName: file.name || '',
       },
     });
 
@@ -42,6 +54,9 @@ export async function onRequestPost(context) {
       key,
       path,
       publicUrl: `${publicBase}${path}`,
+      size: file.size,
+      contentType: file.type || '',
+      uploadedAt: new Date().toISOString(),
     });
   } catch (error) {
     return json(502, { ok: false, error: error.message || 'R2 upload failed' });

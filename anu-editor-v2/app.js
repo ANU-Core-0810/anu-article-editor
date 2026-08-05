@@ -1,5 +1,6 @@
 const ARTICLE_IMAGE_BASE = 'https://pub-14eaf4c4a9324927bf2879a272de972a.r2.dev';
 const EDITOR_STORAGE_KEY = 'anu-article-editor-v2';
+const ARTICLE_CACHE_KEY = 'anu-article-editor-v2-articles';
 const TEXT_NODE_TYPES = ['paragraph', 'subheading'];
 const IMAGE_LAYOUTS = ['title-img-f', 'title-img-m', 'img-s', 'img-m', 'img-l'];
 const DUO_LAYOUTS = ['title-img-duo', 'img-s-duo', 'img-m-duo'];
@@ -718,12 +719,14 @@ function bindEvents() {
   els.articleSearch.addEventListener('input', event => {
     state.articleQuery = event.target.value;
     renderArticleList();
+    persistArticleCache();
   });
   els.statusFilters.forEach(button => {
     button.addEventListener('click', () => {
       state.articleStatusFilter = button.dataset.statusFilter || 'all';
-      els.statusFilters.forEach(item => item.classList.toggle('is-active', item === button));
+      updateStatusFilterButtons();
       renderArticleList();
+      persistArticleCache();
     });
   });
   els.loadArticles.addEventListener('click', loadArticlesFromNotion);
@@ -1015,6 +1018,7 @@ async function handleImageUpload(input, droppedFile = null) {
     assignUploadedImagePath(block, uploadTarget, assetPath, duoIndex, slideIndex);
     renderBlockList();
     updatePreview();
+    persistDraft();
     markSaved('Path ready');
     input.value = '';
     return;
@@ -1028,6 +1032,7 @@ async function handleImageUpload(input, droppedFile = null) {
 
     renderBlockList();
     updatePreview();
+    persistDraft();
     markSaved('Uploaded');
   } catch (error) {
     markSaved(error.message || 'Upload failed');
@@ -1060,9 +1065,20 @@ async function uploadImageToR2(file, assetPath, endpoint = getUploadEndpoint()) 
     method: 'POST',
     body: formData,
   });
-  const result = await response.json();
-  if (!result.ok) throw new Error(result.error || 'Upload failed');
+  const result = await response.json().catch(() => ({ ok: false, error: 'Upload failed' }));
+  if (!response.ok || !result.ok) throw new Error(uploadErrorMessage(result.error, response.status));
   return result;
+}
+
+function uploadErrorMessage(error, status) {
+  const message = String(error || '').trim();
+  if (status === 401 || /token/i.test(message)) return '업로드 토큰 확인 필요';
+  if (status === 413 || /larger/i.test(message)) return '이미지 용량 초과';
+  if (status === 415 || /only image/i.test(message)) return '이미지 파일만 업로드 가능';
+  if (/binding/i.test(message)) return 'R2 바인딩 확인 필요';
+  if (/missing upload file/i.test(message)) return '업로드 파일 없음';
+  if (/missing upload key/i.test(message)) return '이미지 경로 없음';
+  return message || '업로드 실패';
 }
 
 function getUploadEndpoint() {
@@ -1716,6 +1732,12 @@ function getFilteredArticles() {
     });
 }
 
+function updateStatusFilterButtons() {
+  els.statusFilters.forEach(item => {
+    item.classList.toggle('is-active', item.dataset.statusFilter === state.articleStatusFilter);
+  });
+}
+
 function selectArticle(index) {
   const article = state.articles[index];
   if (!article) return;
@@ -1950,6 +1972,33 @@ function persistDraft() {
   localStorage.setItem(EDITOR_STORAGE_KEY, JSON.stringify(payload));
 }
 
+function persistArticleCache() {
+  const payload = {
+    cachedAt: new Date().toISOString(),
+    articles: state.articles,
+    articleQuery: state.articleQuery,
+    articleStatusFilter: state.articleStatusFilter,
+  };
+  localStorage.setItem(ARTICLE_CACHE_KEY, JSON.stringify(payload));
+}
+
+function loadArticleCache() {
+  const raw = localStorage.getItem(ARTICLE_CACHE_KEY);
+  if (!raw) return false;
+  try {
+    const payload = JSON.parse(raw);
+    state.articles = Array.isArray(payload.articles) ? payload.articles : [];
+    state.articleQuery = payload.articleQuery || '';
+    state.articleStatusFilter = payload.articleStatusFilter || 'all';
+    els.articleSearch.value = state.articleQuery;
+    updateStatusFilterButtons();
+    return true;
+  } catch (error) {
+    localStorage.removeItem(ARTICLE_CACHE_KEY);
+    return false;
+  }
+}
+
 function scheduleDraftAutosave() {
   window.clearTimeout(draftAutosaveTimer);
   draftAutosaveTimer = window.setTimeout(() => {
@@ -2045,6 +2094,7 @@ async function runGasAction(action) {
     if (result.sheetUrl) window.open(result.sheetUrl, '_blank', 'noopener');
     if (result.article) {
       mergeArticleFromApi(result.article);
+      persistArticleCache();
       renderArticleList();
     }
     markGasState(result.message || 'Done');
@@ -2086,6 +2136,7 @@ async function loadArticlesFromNotion() {
     markSaved('Loading');
     const result = await callGasApi('listArticles', { includeAll: true });
     state.articles = result.articles || [];
+    persistArticleCache();
     renderArticleList();
     renderNotionDiagnostics({
       message: buildNotionLoadSummary(result),
@@ -2490,10 +2541,11 @@ function escapeAttr(value) {
   return escapeHtml(value).replace(/`/g, '&#96;');
 }
 
+bindEvents();
+loadArticleCache();
+loadDraft();
 renderArticleList();
 renderBlockList();
-bindEvents();
-loadDraft();
 setViewport(1440);
 updatePublishDateLabel();
 refreshIcons();
