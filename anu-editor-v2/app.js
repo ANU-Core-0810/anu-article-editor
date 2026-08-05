@@ -14,6 +14,7 @@ let nextBlockNumber = 4;
 const state = {
   previewReady: false,
   viewportWidth: 1440,
+  previewContentHeight: 0,
   selectedBlockId: 'b1',
   articles: [],
   articleQuery: '',
@@ -744,6 +745,11 @@ function bindEvents() {
     if (event.data && event.data.type === 'ANU_ARTICLE_PREVIEW_READY') {
       state.previewReady = true;
       updatePreview();
+      return;
+    }
+    if (event.data && event.data.type === 'ANU_ARTICLE_PREVIEW_HEIGHT') {
+      state.previewContentHeight = Math.max(0, Number(event.data.height) || 0);
+      fitPreviewFrame();
     }
   });
 }
@@ -1711,6 +1717,12 @@ function setViewport(width) {
   state.viewportWidth = Math.max(320, Math.min(1920, Number(width)));
   els.viewportRange.value = state.viewportWidth;
   els.viewportLabel.textContent = `${state.viewportWidth}px`;
+  state.previewContentHeight = 0;
+  const stage = els.deviceFrame.parentElement;
+  if (stage) stage.scrollTop = 0;
+  if (state.previewReady && els.previewFrame.contentWindow) {
+    els.previewFrame.contentWindow.scrollTo(0, 0);
+  }
   fitPreviewFrame();
 }
 
@@ -1719,7 +1731,8 @@ function fitPreviewFrame() {
   if (!stage) return;
   const availableWidth = Math.max(320, stage.clientWidth - 48);
   const scale = Math.min(1, availableWidth / state.viewportWidth);
-  const iframeHeight = Math.max(640, window.innerHeight - 210);
+  const viewportHeight = Math.max(640, window.innerHeight - 210);
+  const iframeHeight = Math.max(viewportHeight, state.previewContentHeight || 0);
   els.deviceFrame.style.width = `${Math.round(state.viewportWidth * scale)}px`;
   els.deviceFrame.style.height = `${Math.round(iframeHeight * scale)}px`;
   els.previewFrame.style.width = `${state.viewportWidth}px`;

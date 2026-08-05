@@ -81,25 +81,26 @@
       display: grid;
       grid-template-columns: minmax(180px, 1fr) auto minmax(180px, 1fr);
       align-items: start;
-      min-height: clamp(150px, 10.8vw, 206px);
-      padding: clamp(22px, 2.45vw, 42px) clamp(24px, 3vw, 58px) 0;
+      min-height: 95px;
+      padding: 21px 44px 0;
       background: #fff;
       color: #111;
     }
 
     .preview-site-logo {
       font-family: var(--font-akkurat, "AkkuratLLWeb", sans-serif);
-      font-size: clamp(76px, 5.55vw, 106px);
+      width: 174px;
+      font-size: 78px;
       font-weight: 700;
-      line-height: 0.76;
+      line-height: 0.74;
       letter-spacing: 0;
     }
 
     .preview-site-nav,
     .preview-site-actions {
       display: flex;
-      gap: clamp(28px, 2.6vw, 48px);
-      padding-top: clamp(16px, 1.9vw, 34px);
+      gap: 44px;
+      padding-top: 27px;
       font-family: var(--font-akkurat, "AkkuratLLWeb", sans-serif);
       font-size: 16px;
       font-weight: 400;
@@ -109,7 +110,7 @@
 
     .preview-site-actions {
       justify-content: flex-end;
-      gap: clamp(18px, 1.6vw, 30px);
+      gap: 26px;
     }
 
     .preview-mobile-actions {
@@ -118,57 +119,67 @@
 
     .preview-shell {
       overflow: hidden;
-      padding: clamp(56px, 5.4vw, 104px) 0 112px;
+      padding: 124px 0 124px;
     }
 
     .preview-hero {
       display: grid;
-      grid-template-columns: minmax(0, 1.65fr) minmax(360px, 0.78fr);
+      grid-template-columns: repeat(12, minmax(0, 1fr));
       align-items: start;
-      gap: clamp(48px, 7vw, 132px);
+      gap: 44px;
       width: 100%;
-      margin: 0 auto clamp(44px, 4.4vw, 72px);
-      padding: 0 clamp(42px, 5.2vw, 92px);
+      margin: 0 auto 48px;
+      padding: 0 44px;
     }
 
     .preview-title-column,
     .preview-copy-column {
       min-width: 0;
+      width: 100%;
+      justify-self: stretch;
+    }
+
+    .preview-title-column {
+      grid-column: span 8;
     }
 
     .preview-copy-column {
-      padding-top: clamp(2px, 0.42vw, 8px);
+      grid-column: span 4;
+      display: flex;
+      flex-direction: column;
+      gap: 48px;
+      padding-top: 6px;
     }
 
     .preview-kicker {
-      margin: 0 0 18px;
+      margin: 0;
       color: #111;
       font-family: var(--font-akkurat, "AkkuratLLWeb", sans-serif);
-      font-size: 13px;
-      font-weight: 700;
-      line-height: 1.45;
-      text-transform: uppercase;
+      font-size: 17px;
+      font-weight: 500;
+      line-height: 26px;
+      text-transform: none;
     }
 
     .preview-title {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 8px;
       margin: 0;
       color: #111;
       font-family: var(--font-akkurat, "AkkuratLLWeb", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
-      font-size: clamp(54px, 5.15vw, 102px);
+      font-size: 78px;
       font-weight: 700;
-      line-height: 1.08;
+      line-height: 91px;
       letter-spacing: 0;
       text-transform: uppercase;
     }
 
     .preview-title span {
-      font-family: var(--font-pretendard, "Pretendard Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
-      font-size: clamp(18px, 1.16vw, 24px);
-      font-weight: 700;
-      line-height: 1.48;
+      font-family: var(--font-akkurat, "AkkuratLLWeb", var(--font-pretendard), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+      font-size: 26px;
+      font-weight: 500;
+      line-height: 39px;
       text-transform: none;
     }
 
@@ -176,10 +187,10 @@
       width: 100%;
       margin: 0;
       color: #111;
-      font-family: var(--font-pretendard, "Pretendard Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
-      font-size: 15px;
-      font-weight: 650;
-      line-height: 1.72;
+      font-family: var(--font-akkurat, "AkkuratLLWeb", var(--font-pretendard), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+      font-size: 17px;
+      font-weight: 500;
+      line-height: 26px;
       word-break: keep-all;
     }
 
@@ -248,8 +259,8 @@
 
     @media (max-width: 767px) {
       .preview-site-promo {
-        min-height: 42px;
-        font-size: 16px;
+        min-height: 34px;
+        font-size: 13px;
       }
 
       .preview-site-promo button {
@@ -261,13 +272,14 @@
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
-        min-height: 132px;
-        padding: 22px 22px 0;
+        min-height: 63px;
+        padding: 21px 16px 0;
       }
 
       .preview-site-logo {
-        font-size: 59px;
-        line-height: 0.86;
+        width: 78px;
+        font-size: 47px;
+        line-height: 0.68;
       }
 
       .preview-site-nav,
@@ -323,13 +335,25 @@
       }
 
       .preview-hero {
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
         gap: 24px;
-        margin-bottom: 28px;
-        padding: 0 22px;
+        margin-bottom: 20px;
+        padding: 0 16px;
+      }
+
+      .preview-title-column,
+      .preview-copy-column {
+        flex: none;
+        width: 100% !important;
       }
 
       .preview-copy-column {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        inline-size: 100% !important;
         padding-top: 0;
       }
 
@@ -338,18 +362,28 @@
       }
 
       .preview-title {
-        font-size: clamp(39px, 11vw, 46px);
-        line-height: 1.13;
+        font-size: 32px;
+        line-height: 37px;
+        gap: 8px;
       }
 
       .preview-title span {
-        font-size: 22px;
-        line-height: 1.52;
+        font-size: 19px;
+        font-weight: 500;
+        line-height: 32px;
       }
 
       .preview-deck {
-        font-size: 17px;
-        line-height: 1.76;
+        margin-top: 24px;
+        inline-size: 100% !important;
+        max-width: none !important;
+        font-size: 15px;
+        font-weight: 500;
+        line-height: 22px;
+      }
+
+      .preview-body {
+        padding: 0 16px;
       }
 
       .preview-image-placeholder {
@@ -407,6 +441,7 @@
     const categoryEl = document.getElementById('previewCategory');
     const deckEl = document.getElementById('previewDeck');
     const bodyEl = document.getElementById('previewBody');
+    let lastBodyHtml = '';
 
     function renderArticle(payload) {
       const meta = payload.meta || {};
@@ -417,22 +452,61 @@
       titleEl.innerHTML = escapeHtml(englishTitle) + (koreanTitle ? '<span>' + escapeHtml(koreanTitle) + '</span>' : '');
       categoryEl.textContent = formatMetaLine(meta);
       deckEl.textContent = meta.deck || '';
-      bodyEl.innerHTML = payload.html || '<div class="arti-body"></div>';
+      renderBodyHtml(payload.html || '<div class="arti-body"></div>');
+      if (window.ANUArticleBodyInit) window.ANUArticleBodyInit();
+      requestAnimationFrame(() => {
+        window.scrollTo(previousScrollX, previousScrollY);
+        postPreviewHeight();
+      });
+    }
+
+    function renderBodyHtml(nextHtml) {
+      if (nextHtml === lastBodyHtml) {
+        postPreviewHeight();
+        return;
+      }
+
+      const reusableImages = new Map();
+      bodyEl.querySelectorAll('img').forEach(img => {
+        const key = imageKey(img.getAttribute('src') || img.currentSrc || img.src);
+        if (key && !reusableImages.has(key)) reusableImages.set(key, img);
+      });
+
+      const template = document.createElement('template');
+      template.innerHTML = nextHtml;
+      template.content.querySelectorAll('img').forEach(img => {
+        const key = imageKey(img.getAttribute('src') || img.src);
+        const reusable = reusableImages.get(key);
+        if (reusable) {
+          reusable.removeAttribute('data-fallback-installed');
+          img.replaceWith(reusable);
+          reusableImages.delete(key);
+        }
+      });
+
+      bodyEl.replaceChildren(...template.content.childNodes);
+      lastBodyHtml = nextHtml;
       bodyEl.querySelectorAll('[data-reveal]').forEach(element => {
         element.classList.add('is-visible');
       });
       installImageFallbacks();
-      if (window.ANUArticleBodyInit) window.ANUArticleBodyInit();
-      requestAnimationFrame(() => window.scrollTo(previousScrollX, previousScrollY));
     }
 
     function installImageFallbacks() {
       bodyEl.querySelectorAll('img').forEach(img => {
+        if (img.dataset.fallbackInstalled === 'true') return;
+        img.dataset.fallbackInstalled = 'true';
+        if (img.complete) {
+          requestAnimationFrame(postPreviewHeight);
+        } else {
+          img.addEventListener('load', postPreviewHeight, { once: true });
+        }
         img.addEventListener('error', () => {
           const placeholder = document.createElement('div');
           placeholder.className = 'preview-image-placeholder';
           placeholder.textContent = '이미지 미리보기를 불러올 수 없습니다';
           img.replaceWith(placeholder);
+          postPreviewHeight();
         }, { once: true });
       });
     }
@@ -440,8 +514,35 @@
     function formatMetaLine(meta) {
       return [meta.category, meta.type, meta.publishDate]
         .filter(Boolean)
-        .map(value => String(value).toUpperCase())
+        .map(value => formatMetaValue(value))
         .join(' / ');
+    }
+
+    function formatMetaValue(value) {
+      const text = String(value || '').trim();
+      if (!text) return '';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+      return text.charAt(0).toUpperCase() + text.slice(1);
+    }
+
+    function imageKey(src) {
+      const value = String(src || '').trim();
+      if (!value) return '';
+      try {
+        return new URL(value, window.location.href).href;
+      } catch (error) {
+        return value;
+      }
+    }
+
+    function postPreviewHeight() {
+      const height = Math.max(
+        document.body.scrollHeight,
+        document.documentElement.scrollHeight,
+        document.body.offsetHeight,
+        document.documentElement.offsetHeight
+      );
+      window.parent.postMessage({ type: 'ANU_ARTICLE_PREVIEW_HEIGHT', height }, '*');
     }
 
     window.addEventListener('message', event => {
@@ -450,6 +551,8 @@
     });
 
     window.parent.postMessage({ type: 'ANU_ARTICLE_PREVIEW_READY' }, '*');
+    window.addEventListener('load', postPreviewHeight);
+    window.addEventListener('resize', postPreviewHeight);
 
     function escapeHtml(value) {
       return String(value || '')
