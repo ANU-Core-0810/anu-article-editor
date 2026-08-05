@@ -60,8 +60,15 @@
       <label class="search-field">
         <span class="sr-only">Search articles</span>
         <i data-lucide="search" aria-hidden="true"></i>
-        <input type="search" placeholder="Search title or code">
+        <input id="articleSearch" type="search" placeholder="Search title or code">
       </label>
+
+      <div class="status-filter" role="group" aria-label="Filter articles by status">
+        <button class="is-active" type="button" data-status-filter="all">All</button>
+        <button type="button" data-status-filter="등록 중">등록 중</button>
+        <button type="button" data-status-filter="업데이트">업데이트</button>
+        <button type="button" data-status-filter="업로드">업로드</button>
+      </div>
 
       <nav class="article-list" aria-label="Articles">
         <button class="article-row is-active" type="button">
@@ -107,14 +114,15 @@
               <span>More</span>
             </summary>
             <div class="utility-menu__content">
+              <button type="button" id="saveDraft"><i data-lucide="hard-drive" aria-hidden="true"></i>Save local draft</button>
               <button type="button" id="copyHtml"><i data-lucide="code-2" aria-hidden="true"></i>Copy HTML</button>
               <button type="button" id="copyJson"><i data-lucide="braces" aria-hidden="true"></i>Copy JSON</button>
               <button type="button" id="importJson"><i data-lucide="upload" aria-hidden="true"></i>Import JSON</button>
             </div>
           </details>
-          <button class="ui-button ui-button--primary" type="button" id="saveDraft">
-            <i data-lucide="save" aria-hidden="true"></i>
-            <span>Save draft</span>
+          <button class="ui-button ui-button--primary" type="button" data-gas-action="saveEditorData">
+            <i data-lucide="database" aria-hidden="true"></i>
+            <span>Save to Notion</span>
           </button>
           <input id="importJsonInput" class="sr-only" type="file" accept="application/json,.json">
         </div>
@@ -182,12 +190,19 @@
               <div class="field">
                 <span>Publish date</span>
                 <div class="date-control">
+                  <button type="button" id="publishPrev" aria-label="Previous day">
+                    <i data-lucide="chevron-left" aria-hidden="true"></i>
+                  </button>
                   <input id="publishDate" type="date" aria-label="Publish date">
+                  <button type="button" id="publishNext" aria-label="Next day">
+                    <i data-lucide="chevron-right" aria-hidden="true"></i>
+                  </button>
                   <button type="button" id="publishToday">Today</button>
                   <button type="button" id="publishClear" aria-label="Clear publish date">
                     <i data-lucide="x" aria-hidden="true"></i>
                   </button>
                 </div>
+                <small id="publishDateLabel" class="date-label">No date</small>
               </div>
               <label class="field">
                 <span>Cafe24 product no.</span>
@@ -239,7 +254,12 @@
                 <p class="panel-eyebrow">Cafe24</p>
                 <h2>Export actions</h2>
               </div>
-              <span id="gasState" class="panel-state">Ready</span>
+              <div class="panel__actions">
+                <span id="gasState" class="panel-state">Ready</span>
+                <button class="ui-button ui-button--ghost" type="button" id="closeExport" aria-label="Close Cafe24 export panel">
+                  <i data-lucide="x" aria-hidden="true"></i>
+                </button>
+              </div>
             </div>
             <div class="pipeline-panel">
               <label class="field field--wide">

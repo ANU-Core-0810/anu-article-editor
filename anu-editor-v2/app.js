@@ -6,7 +6,9 @@ const DUO_LAYOUTS = ['title-img-duo', 'img-s-duo', 'img-m-duo'];
 const TEXT_BLOCK_TYPES = ['text', 'quote', 'credit'];
 const MEDIA_BLOCK_TYPES = ['image', 'duo', 'slide', 'video'];
 let activeRichLink = null;
+let activeLinkEditor = null;
 let draggedBlockId = '';
+let draftAutosaveTimer = 0;
 let nextBlockNumber = 4;
 
 const state = {
@@ -14,6 +16,8 @@ const state = {
   viewportWidth: 1440,
   selectedBlockId: 'b1',
   articles: [],
+  articleQuery: '',
+  articleStatusFilter: 'all',
   meta: {
     englishTitle: 'What Makes a Good Bowl',
     koreanTitle: '손의 경험 | 좋은 보울을 만드는 요소',
@@ -71,11 +75,13 @@ const els = {
   articleCategory: document.getElementById('articleCategory'),
   articleDeck: document.getElementById('articleDeck'),
   articleList: document.querySelector('.article-list'),
+  articleSearch: document.getElementById('articleSearch'),
   articlePageId: document.getElementById('articlePageId'),
   articleType: document.getElementById('articleType'),
   blockList: document.getElementById('blockList'),
   cafe24ProductCode: document.getElementById('cafe24ProductCode'),
   cafe24ProductNo: document.getElementById('cafe24ProductNo'),
+  closeExport: document.getElementById('closeExport'),
   copyHtml: document.getElementById('copyHtml'),
   copyJson: document.getElementById('copyJson'),
   deviceFrame: document.getElementById('deviceFrame'),
@@ -92,12 +98,17 @@ const els = {
   productCategoryIds: document.getElementById('productCategoryIds'),
   publishClear: document.getElementById('publishClear'),
   publishDate: document.getElementById('publishDate'),
+  publishDateLabel: document.getElementById('publishDateLabel'),
+  publishNext: document.getElementById('publishNext'),
+  publishPrev: document.getElementById('publishPrev'),
   publishToday: document.getElementById('publishToday'),
   saveDraft: document.getElementById('saveDraft'),
   saveState: document.getElementById('saveState'),
   toggleComposerFloat: document.getElementById('toggleComposerFloat'),
   toggleExport: document.getElementById('toggleExport'),
   toggleSidebar: document.getElementById('toggleSidebar'),
+  utilityMenu: document.querySelector('.utility-menu'),
+  statusFilters: document.querySelectorAll('[data-status-filter]'),
   viewportLabel: document.getElementById('viewportLabel'),
   viewportRange: document.getElementById('viewportRange'),
   cafeExportPanel: document.getElementById('cafeExportPanel'),
@@ -230,6 +241,7 @@ ${rows}
 function renderBlockList() {
   els.blockList.innerHTML = state.blocks.map((block, index) => blockEditorHtml(block, index)).join('');
   refreshIcons();
+  scrollSelectedBlockIntoView();
 }
 
 function blockEditorHtml(block, index) {
@@ -540,10 +552,23 @@ function bindEvents() {
     const popover = document.querySelector('.link-popover');
     if (event.target.closest('.link-popover')) {
       const action = event.target.closest('[data-link-popover-action]')?.dataset.linkPopoverAction;
+      const editorAction = event.target.closest('[data-link-editor-action]')?.dataset.linkEditorAction;
       if (action) handleLinkPopoverAction(action);
+      if (editorAction === 'cancel') hideLinkPopover();
       return;
     }
     if (!event.target.closest('.rich-editor a[data-link-type]')) hideLinkPopover();
+  });
+
+  document.addEventListener('submit', event => {
+    if (!event.target.closest('[data-link-editor-form]')) return;
+    event.preventDefault();
+    applyLinkEditor();
+  });
+
+  document.addEventListener('change', event => {
+    if (!event.target.closest('.link-popover')) return;
+    if (event.target.matches('[data-link-field="type"]')) updateLinkEditorFields();
   });
 
   els.blockList.addEventListener('paste', event => {
@@ -575,18 +600,45 @@ function bindEvents() {
   els.copyHtml.addEventListener('click', copyCurrentHtml);
   els.copyJson.addEventListener('click', copyCurrentJson);
   els.generateArticleCode.addEventListener('click', generateAndSetArticleCode);
-  els.importJson.addEventListener('click', () => els.importJsonInput.click());
+  els.importJson.addEventListener('click', () => {
+    closeUtilityMenu();
+    els.importJsonInput.click();
+  });
   els.importJsonInput.addEventListener('change', importJsonFile);
+  els.articleSearch.addEventListener('input', event => {
+    state.articleQuery = event.target.value;
+    renderArticleList();
+  });
+  els.statusFilters.forEach(button => {
+    button.addEventListener('click', () => {
+      state.articleStatusFilter = button.dataset.statusFilter || 'all';
+      els.statusFilters.forEach(item => item.classList.toggle('is-active', item === button));
+      renderArticleList();
+    });
+  });
   els.loadArticles.addEventListener('click', loadArticlesFromNotion);
   els.minimizeComposer.addEventListener('click', () => document.body.classList.toggle('composer-minimized'));
+  els.publishPrev.addEventListener('click', () => shiftPublishDate(-1));
+  els.publishNext.addEventListener('click', () => shiftPublishDate(1));
   els.publishToday.addEventListener('click', () => setPublishDate(new Date()));
   els.publishClear.addEventListener('click', () => setPublishDate(null));
   els.saveDraft.addEventListener('click', saveDraft);
   els.toggleComposerFloat.addEventListener('click', () => document.body.classList.toggle('composer-floating'));
-  els.toggleExport.addEventListener('click', () => {
-    els.cafeExportPanel.classList.toggle('is-collapsed');
-  });
+  els.closeExport.addEventListener('click', () => setExportOpen(false));
+  els.toggleExport.addEventListener('click', () => setExportOpen(els.cafeExportPanel.classList.contains('is-collapsed')));
   els.toggleSidebar.addEventListener('click', () => document.body.classList.toggle('sidebar-collapsed'));
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !els.cafeExportPanel.classList.contains('is-collapsed')) {
+      setExportOpen(false);
+    }
+  });
+
+  document.addEventListener('click', event => {
+    if (!document.body.classList.contains('export-open')) return;
+    if (event.target.closest('#cafeExportPanel') || event.target.closest('#toggleExport')) return;
+    setExportOpen(false);
+  });
 
   els.articleList.addEventListener('click', event => {
     const row = event.target.closest('[data-article-index]');
@@ -610,6 +662,7 @@ function bindEvents() {
 }
 
 function addBlock(type, insertIndex = state.blocks.length) {
+  if (MEDIA_BLOCK_TYPES.includes(type)) ensureArticleCodeForAssets();
   const block = createBlock(type);
   state.blocks.splice(insertIndex, 0, block);
   state.selectedBlockId = block.id;
@@ -623,11 +676,49 @@ function setPublishDate(date) {
   syncMetaFromInputs();
 }
 
+function shiftPublishDate(deltaDays) {
+  const currentDate = parseDateInputValue(els.publishDate.value) || new Date();
+  currentDate.setDate(currentDate.getDate() + deltaDays);
+  setPublishDate(currentDate);
+}
+
+function updatePublishDateLabel() {
+  const date = parseDateInputValue(els.publishDate.value);
+  if (!date) {
+    els.publishDateLabel.textContent = 'No date';
+    return;
+  }
+  els.publishDateLabel.textContent = new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    weekday: 'short',
+  }).format(date);
+}
+
+function setExportOpen(open) {
+  els.cafeExportPanel.classList.toggle('is-collapsed', !open);
+  document.body.classList.toggle('export-open', open);
+  els.toggleExport.setAttribute('aria-expanded', String(open));
+  if (open) {
+    const firstInput = els.cafeExportPanel.querySelector('.pipeline-panel input, .pipeline-panel button');
+    if (firstInput) firstInput.focus({ preventScroll: true });
+  } else {
+    els.toggleExport.focus({ preventScroll: true });
+  }
+}
+
 function formatDateInputValue(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function parseDateInputValue(value) {
+  const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
 }
 
 function markDropTarget(card, pointerY) {
@@ -675,6 +766,7 @@ function handleBlockAction(blockId, action) {
     state.blocks.splice(index, 1);
     state.selectedBlockId = state.blocks[Math.max(0, index - 1)].id;
   } else if (action === 'autoImagePath' && state.blocks[index].type === 'image') {
+    ensureArticleCodeForAssets();
     state.blocks[index].src = buildArticleAssetPath(imageSlotName(state.blocks[index]), state.blocks[index].src || 'image.jpg');
   }
 
@@ -689,6 +781,7 @@ function handleDuoAction(blockId, action, itemIndex) {
   block.items = normalizeDuoItems(block.items);
 
   if (action === 'autoPath' && block.items[itemIndex]) {
+    ensureArticleCodeForAssets();
     block.items[itemIndex].src = buildArticleAssetPath(`duo-${itemIndex + 1}`, block.items[itemIndex].src || 'image.jpg');
   }
 
@@ -707,6 +800,7 @@ async function handleImageUpload(input) {
 
   const uploadTarget = input.dataset.uploadTarget;
   const duoIndex = Number(input.dataset.duoIndex);
+  ensureArticleCodeForAssets();
   const slot = uploadTarget === 'duo' ? `duo-${duoIndex + 1}` : imageSlotName(block);
   const assetPath = buildArticleAssetPath(slot, file.name);
 
@@ -801,39 +895,14 @@ function handleRichAction(blockId, action) {
   } else if (action === 'underline') {
     document.execCommand('underline', false);
   } else if (action === 'externalLink') {
-    const href = window.prompt('외부 링크 URL을 입력하세요.', 'https://');
-    if (href) {
-      insertInlineLink(editor, {
-        href,
-        target: '_blank',
-        rel: 'noopener',
-        'data-link-type': 'external',
-      }, href);
-    }
+    showLinkEditor({ editor, type: 'external', range: captureEditorRange(editor) });
+    return;
   } else if (action === 'productLink') {
-    const productUrl = window.prompt('상품 URL을 입력하세요.', 'https://anu-seoul.com/product/');
-    if (productUrl) {
-      const productNo = parseProductNo(productUrl);
-      insertInlineLink(editor, {
-        href: productUrl,
-        target: '_blank',
-        rel: 'noopener',
-        'data-link-type': 'product',
-        'data-product-url': productUrl,
-        'data-product-no': productNo,
-      }, productUrl);
-    }
+    showLinkEditor({ editor, type: 'product', range: captureEditorRange(editor) });
+    return;
   } else if (action === 'popupLink') {
-    const title = window.prompt('팝업 제목을 입력하세요.', '');
-    if (title) {
-      const content = window.prompt('팝업 내용을 입력하세요.', '');
-      insertInlineLink(editor, {
-        href: '#',
-        'data-link-type': 'popup',
-        'data-popup-title': title,
-        'data-popup-content': content || '',
-      }, title);
-    }
+    showLinkEditor({ editor, type: 'popup', range: captureEditorRange(editor) });
+    return;
   }
 
   ensureRichNodeStructure(editor);
@@ -844,7 +913,10 @@ function handleRichAction(blockId, action) {
 
 function showLinkPopover(link) {
   activeRichLink = link;
+  activeLinkEditor = null;
   const popover = getLinkPopover();
+  popover.className = 'link-popover';
+  popover.innerHTML = compactLinkPopoverHtml();
   const rect = link.getBoundingClientRect();
   const label = link.dataset.linkType === 'product' ? 'Product link' : link.dataset.linkType === 'popup' ? 'Popup link' : 'External link';
   popover.querySelector('[data-link-popover-label]').textContent = label;
@@ -857,6 +929,7 @@ function hideLinkPopover() {
   const popover = document.querySelector('.link-popover');
   if (popover) popover.hidden = true;
   activeRichLink = null;
+  activeLinkEditor = null;
 }
 
 function getLinkPopover() {
@@ -865,12 +938,16 @@ function getLinkPopover() {
   popover = document.createElement('div');
   popover.className = 'link-popover';
   popover.hidden = true;
-  popover.innerHTML = `<span data-link-popover-label>Link</span>
+  popover.innerHTML = compactLinkPopoverHtml();
+  document.body.appendChild(popover);
+  return popover;
+}
+
+function compactLinkPopoverHtml() {
+  return `<span data-link-popover-label>Link</span>
     <button type="button" data-link-popover-action="edit">Edit</button>
     <button type="button" data-link-popover-action="open">Open</button>
     <button type="button" data-link-popover-action="remove">Remove</button>`;
-  document.body.appendChild(popover);
-  return popover;
 }
 
 function handleLinkPopoverAction(action) {
@@ -878,7 +955,12 @@ function handleLinkPopoverAction(action) {
   const link = activeRichLink;
   const card = link.closest('.block-card');
   if (action === 'edit') {
-    editRichLink(link);
+    showLinkEditor({
+      editor: card?.querySelector('.rich-editor'),
+      link,
+      type: link.dataset.linkType || 'external',
+    });
+    return;
   } else if (action === 'open') {
     const href = link.getAttribute('href');
     if (href && href !== '#') window.open(href, '_blank', 'noopener');
@@ -890,34 +972,172 @@ function handleLinkPopoverAction(action) {
   hideLinkPopover();
 }
 
-function editRichLink(link) {
+function showLinkEditor({ editor, link = null, type = 'external', range = null }) {
+  if (!editor && link) editor = link.closest('.block-card')?.querySelector('.rich-editor');
+  if (!editor) return;
+
+  const popover = getLinkPopover();
+  const selectedText = range ? range.toString().trim() : '';
+  const linkType = ['external', 'product', 'popup'].includes(type) ? type : 'external';
+  const values = link
+    ? linkValuesFromElement(link)
+    : {
+      type: linkType,
+      text: selectedText,
+      url: linkType === 'product' ? 'https://anu-seoul.com/product/' : 'https://',
+      popupTitle: selectedText,
+      popupContent: '',
+    };
+
+  activeRichLink = link;
+  activeLinkEditor = {
+    editor,
+    link,
+    range,
+  };
+
+  popover.className = 'link-popover link-popover--editor';
+  popover.innerHTML = linkEditorHtml(values);
+  positionLinkEditorPopover(popover, link, range, editor);
+  popover.hidden = false;
+  updateLinkEditorFields();
+
+  const firstField = popover.querySelector('[data-link-field="url"], [data-link-field="popupTitle"]');
+  if (firstField) firstField.focus({ preventScroll: true });
+}
+
+function linkValuesFromElement(link) {
   const type = link.dataset.linkType || 'external';
-  if (type === 'product') {
-    const productUrl = window.prompt('상품 URL을 수정하세요.', link.dataset.productUrl || link.getAttribute('href') || 'https://anu-seoul.com/product/');
-    if (!productUrl) return;
-    link.setAttribute('href', productUrl);
-    link.setAttribute('target', '_blank');
-    link.setAttribute('rel', 'noopener');
-    link.dataset.productUrl = productUrl;
-    const productNo = parseProductNo(productUrl);
-    if (productNo) link.dataset.productNo = productNo;
+  return {
+    type,
+    text: link.textContent.trim(),
+    url: type === 'product' ? link.dataset.productUrl || link.href || '' : link.getAttribute('href') || '',
+    popupTitle: link.dataset.popupTitle || link.textContent.trim(),
+    popupContent: link.dataset.popupContent || '',
+  };
+}
+
+function linkEditorHtml(values) {
+  return `<form class="link-editor-form" data-link-editor-form>
+    <label>
+      <span>Type</span>
+      <select data-link-field="type">
+        <option value="external"${values.type === 'external' ? ' selected' : ''}>External</option>
+        <option value="product"${values.type === 'product' ? ' selected' : ''}>Product</option>
+        <option value="popup"${values.type === 'popup' ? ' selected' : ''}>Popup</option>
+      </select>
+    </label>
+    <label>
+      <span>Label</span>
+      <input data-link-field="text" value="${escapeAttr(values.text || '')}" placeholder="Displayed text">
+    </label>
+    <label data-link-field-wrap="url">
+      <span>URL</span>
+      <input data-link-field="url" value="${escapeAttr(values.url || '')}" placeholder="https://">
+    </label>
+    <label data-link-field-wrap="popup">
+      <span>Popup title</span>
+      <input data-link-field="popupTitle" value="${escapeAttr(values.popupTitle || '')}" placeholder="Title">
+    </label>
+    <label data-link-field-wrap="popup">
+      <span>Popup text</span>
+      <textarea data-link-field="popupContent" rows="3" placeholder="Popup content">${escapeHtml(values.popupContent || '')}</textarea>
+    </label>
+    <div class="link-editor-form__actions">
+      <button type="button" data-link-editor-action="cancel">Cancel</button>
+      <button type="submit">Apply</button>
+    </div>
+  </form>`;
+}
+
+function positionLinkEditorPopover(popover, link, range, editor) {
+  const rect = link?.getBoundingClientRect?.()
+    || range?.getBoundingClientRect?.()
+    || editor.getBoundingClientRect();
+  const left = Math.min(window.innerWidth - 336, Math.max(12, rect.left || 12));
+  const top = Math.min(window.innerHeight - 320, Math.max(12, (rect.bottom || rect.top || 12) + 8));
+  popover.style.left = `${left}px`;
+  popover.style.top = `${top}px`;
+}
+
+function updateLinkEditorFields() {
+  const popover = document.querySelector('.link-popover--editor');
+  if (!popover) return;
+  const type = popover.querySelector('[data-link-field="type"]')?.value || 'external';
+  popover.querySelectorAll('[data-link-field-wrap="url"]').forEach(item => {
+    item.hidden = type === 'popup';
+  });
+  popover.querySelectorAll('[data-link-field-wrap="popup"]').forEach(item => {
+    item.hidden = type !== 'popup';
+  });
+}
+
+function applyLinkEditor() {
+  const popover = document.querySelector('.link-popover--editor');
+  if (!popover || !activeLinkEditor) return;
+
+  const type = popover.querySelector('[data-link-field="type"]')?.value || 'external';
+  const text = popover.querySelector('[data-link-field="text"]')?.value.trim() || '';
+  const url = popover.querySelector('[data-link-field="url"]')?.value.trim() || '';
+  const popupTitle = popover.querySelector('[data-link-field="popupTitle"]')?.value.trim() || '';
+  const popupContent = popover.querySelector('[data-link-field="popupContent"]')?.value.trim() || '';
+  const fallbackLabel = type === 'popup' ? popupTitle || 'Popup' : url || 'Link';
+  const attributes = linkAttributesFromValues({ type, url, popupTitle, popupContent });
+  if (!attributes) {
+    markSaved('Invalid URL');
     return;
   }
 
+  if (activeLinkEditor.link) {
+    applyAttributesToLink(activeLinkEditor.link, attributes, text || fallbackLabel);
+    syncRichLinkBlock(activeLinkEditor.link);
+  } else {
+    insertInlineLink(activeLinkEditor.editor, attributes, text || fallbackLabel, activeLinkEditor.range);
+    syncRichEditorCard(activeLinkEditor.editor.closest('.block-card'));
+  }
+
+  hideLinkPopover();
+}
+
+function linkAttributesFromValues({ type, url, popupTitle, popupContent }) {
   if (type === 'popup') {
-    const title = window.prompt('팝업 제목을 수정하세요.', link.dataset.popupTitle || link.textContent.trim());
-    if (!title) return;
-    const content = window.prompt('팝업 내용을 수정하세요.', link.dataset.popupContent || '');
-    link.dataset.popupTitle = title;
-    link.dataset.popupContent = content || '';
-    return;
+    return {
+      href: '#',
+      'data-link-type': 'popup',
+      'data-popup-title': popupTitle || 'Popup',
+      'data-popup-content': popupContent || '',
+    };
   }
 
-  const href = window.prompt('외부 링크 URL을 수정하세요.', link.getAttribute('href') || 'https://');
-  if (!href) return;
-  link.setAttribute('href', href);
-  link.setAttribute('target', '_blank');
-  link.setAttribute('rel', 'noopener');
+  if (!url || !safeHref(url)) return null;
+  if (type === 'product') {
+    const productNo = parseProductNo(url);
+    return {
+      href: url,
+      target: '_blank',
+      rel: 'noopener',
+      'data-link-type': 'product',
+      'data-product-url': url,
+      'data-product-no': productNo,
+    };
+  }
+
+  return {
+    href: url,
+    target: '_blank',
+    rel: 'noopener',
+    'data-link-type': 'external',
+  };
+}
+
+function applyAttributesToLink(link, attributes, label) {
+  ['href', 'target', 'rel', 'data-link-type', 'data-product-code', 'data-product-no', 'data-product-url', 'data-popup-title', 'data-popup-content'].forEach(name => {
+    link.removeAttribute(name);
+  });
+  Object.entries(attributes).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') link.setAttribute(key, String(value));
+  });
+  link.textContent = label;
 }
 
 function syncRichLinkBlock(link) {
@@ -954,14 +1174,28 @@ function getCurrentRichNode(editor) {
   return element?.closest?.('.rich-editor__node') || editor.querySelector('.rich-editor__node');
 }
 
-function insertInlineLink(editor, attributes, fallbackLabel) {
+function captureEditorRange(editor) {
   const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0) return;
+  if (!selection || selection.rangeCount === 0) return null;
+  const range = selection.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) return null;
+  return range.cloneRange();
+}
 
+function insertInlineLink(editor, attributes, fallbackLabel, rangeOverride = null) {
+  const selection = window.getSelection();
+  if (!selection) return;
+
+  if (rangeOverride) {
+    selection.removeAllRanges();
+    selection.addRange(rangeOverride);
+  }
+
+  if (selection.rangeCount === 0) return;
   const range = selection.getRangeAt(0);
   if (!editor.contains(range.commonAncestorContainer)) return;
 
-  const selectedText = selection.toString().trim();
+  const selectedText = range.toString().trim();
   const link = document.createElement('a');
   Object.entries(attributes).forEach(([key, value]) => {
     if (value !== undefined && value !== null) link.setAttribute(key, String(value));
@@ -1175,6 +1409,7 @@ function syncMetaFromInputs() {
     editorPageId: els.editorPageId.value,
     deck: els.articleDeck.value,
   };
+  updatePublishDateLabel();
   updatePreview();
   markSaved('Editing');
 }
@@ -1194,11 +1429,17 @@ function updatePreview() {
 
 function renderArticleList() {
   if (!state.articles.length) {
-    els.articleList.innerHTML = '<p class="empty-state">No articles loaded.</p>';
+    els.articleList.innerHTML = '<p class="empty-state">Load Notion to browse articles.</p>';
     return;
   }
 
-  els.articleList.innerHTML = state.articles.map((article, index) => {
+  const filteredArticles = getFilteredArticles();
+  if (!filteredArticles.length) {
+    els.articleList.innerHTML = '<p class="empty-state">No articles match this filter.</p>';
+    return;
+  }
+
+  els.articleList.innerHTML = filteredArticles.map(({ article, index }) => {
     const selected = article.articlePageId && article.articlePageId === state.meta.articlePageId ? ' is-active' : '';
     return `<button class="article-row${selected}" type="button" data-article-index="${index}">
       <span>${escapeHtml(article.articleCode || 'NO-CODE')}</span>
@@ -1206,6 +1447,26 @@ function renderArticleList() {
       <em>${escapeHtml(article.status || '')}</em>
     </button>`;
   }).join('');
+}
+
+function getFilteredArticles() {
+  const query = state.articleQuery.trim().toLowerCase();
+  const status = state.articleStatusFilter;
+  return state.articles
+    .map((article, index) => ({ article, index }))
+    .filter(({ article }) => {
+      const matchesStatus = status === 'all' || article.status === status;
+      if (!matchesStatus) return false;
+      if (!query) return true;
+      return [
+        article.articleCode,
+        article.koreanTitle,
+        article.englishTitle,
+        article.status,
+        article.category,
+        article.type,
+      ].some(value => String(value || '').toLowerCase().includes(query));
+    });
 }
 
 function selectArticle(index) {
@@ -1272,6 +1533,15 @@ function markSelected(blockId) {
   });
 }
 
+function scrollSelectedBlockIntoView() {
+  window.requestAnimationFrame(() => {
+    const card = Array.from(els.blockList.querySelectorAll('.block-card'))
+      .find(item => item.dataset.id === state.selectedBlockId);
+    if (!card) return;
+    card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  });
+}
+
 function bindFloatingComposerDrag() {
   const composer = document.querySelector('.composer');
   const handle = document.querySelector('.composer__floatbar');
@@ -1311,11 +1581,13 @@ async function copyCurrentHtml() {
   const html = exportArticleHtml(state.blocks);
   const copied = await writeClipboard(html);
   markSaved(copied ? 'HTML copied' : 'Copy failed');
+  closeUtilityMenu();
 }
 
 async function copyCurrentJson() {
   const copied = await writeClipboard(JSON.stringify(buildEditorPayload(), null, 2));
   markSaved(copied ? 'JSON copied' : 'Copy failed');
+  closeUtilityMenu();
 }
 
 async function writeClipboard(text) {
@@ -1346,9 +1618,28 @@ async function writeClipboard(text) {
 }
 
 function saveDraft() {
+  persistDraft();
+  markSaved('Saved local');
+  closeUtilityMenu();
+}
+
+function closeUtilityMenu() {
+  if (els.utilityMenu) els.utilityMenu.open = false;
+}
+
+function persistDraft() {
   const payload = buildEditorPayload();
   localStorage.setItem(EDITOR_STORAGE_KEY, JSON.stringify(payload));
-  markSaved('Saved local');
+}
+
+function scheduleDraftAutosave() {
+  window.clearTimeout(draftAutosaveTimer);
+  draftAutosaveTimer = window.setTimeout(() => {
+    persistDraft();
+    if (els.saveState.textContent === 'Editing') {
+      els.saveState.textContent = 'Autosaved';
+    }
+  }, 900);
 }
 
 function loadDraft() {
@@ -1423,6 +1714,7 @@ function syncInputsFromMeta() {
   els.articlePageId.value = state.meta.articlePageId || '';
   els.editorPageId.value = state.meta.editorPageId || '';
   els.articleDeck.value = state.meta.deck || '';
+  updatePublishDateLabel();
 }
 
 async function runGasAction(action) {
@@ -1502,6 +1794,13 @@ function generateLocalArticleCode() {
   return `${prefix}${String(max + 1).padStart(3, '0')}`;
 }
 
+function ensureArticleCodeForAssets() {
+  if (state.meta.code && state.meta.code.trim()) return;
+  els.articleCode.value = generateLocalArticleCode();
+  syncMetaFromInputs();
+  markSaved('Code ready');
+}
+
 function getPipelineEndpoint() {
   const explicitEndpoint = els.gasEndpoint.value.trim();
   if (explicitEndpoint) return explicitEndpoint;
@@ -1529,6 +1828,7 @@ function downloadText(text, filename, mimeType) {
 
 function markSaved(label) {
   els.saveState.textContent = label;
+  if (label === 'Editing') scheduleDraftAutosave();
   window.clearTimeout(markSaved.timer);
   markSaved.timer = window.setTimeout(() => {
     els.saveState.textContent = 'Saved';
@@ -1767,8 +2067,10 @@ function escapeAttr(value) {
   return escapeHtml(value).replace(/`/g, '&#96;');
 }
 
+renderArticleList();
 renderBlockList();
 bindEvents();
 loadDraft();
 setViewport(1440);
+updatePublishDateLabel();
 refreshIcons();
