@@ -166,20 +166,20 @@
           <label class="field">
             <span>카테고리</span>
             <select id="articleCategory">
-              <option value="life">라이프</option>
-              <option value="craft" selected>크래프트</option>
-              <option value="sustainability">지속가능성</option>
-              <option value="archive">아카이브</option>
+              <option value="life">life</option>
+              <option value="craft" selected>craft</option>
+              <option value="sustainability">sustainability</option>
+              <option value="archive">archive</option>
             </select>
           </label>
           <label class="field">
             <span>유형</span>
             <select id="articleType">
-              <option value="essay">에세이</option>
-              <option value="interview">인터뷰</option>
-              <option value="curation">큐레이션</option>
-              <option value="guide" selected>가이드</option>
-              <option value="project">프로젝트</option>
+              <option value="essay">essay</option>
+              <option value="interview">interview</option>
+              <option value="curation">curation</option>
+              <option value="guide" selected>guide</option>
+              <option value="project">project</option>
             </select>
           </label>
           <div class="field">
@@ -228,6 +228,7 @@
 
       <div class="workarea">
         <section class="composer" aria-label="본문 편집 패널">
+          <div class="composer-resize-handle" aria-hidden="true"></div>
           <div class="composer__floatbar">
             <span>편집 패널</span>
             <button class="ui-button ui-button--ghost" type="button" id="toggleComposerFloat">
@@ -309,12 +310,13 @@
             <div class="preview-controls">
               <div class="segmented segmented--preview" role="group" aria-label="미리보기 크기">
                 <button class="is-active" type="button" data-width="1440"><i data-lucide="monitor" aria-hidden="true"></i>PC</button>
+                <button type="button" data-width="1920"><i data-lucide="screen-share" aria-hidden="true"></i>와이드</button>
                 <button type="button" data-width="834"><i data-lucide="tablet" aria-hidden="true"></i>태블릿</button>
                 <button type="button" data-width="390"><i data-lucide="smartphone" aria-hidden="true"></i>모바일</button>
               </div>
               <label class="viewport-slider">
                 <span id="viewportLabel">1440px</span>
-                <input id="viewportRange" type="range" min="320" max="1440" value="1440">
+                <input id="viewportRange" type="range" min="320" max="1920" value="1440">
               </label>
             </div>
           </div>

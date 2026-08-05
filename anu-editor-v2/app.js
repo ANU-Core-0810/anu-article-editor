@@ -132,7 +132,7 @@ ${textChildrenToArticleHtml(block)}
 
   if (block.type === 'heading') {
     return `<div class="arti-block arti-block--narrow">
-  <h2 class="mid-title">${escapeHtml(block.text)}</h2>
+  <p class="basic-p"><span class="arti-h">${escapeHtml(block.text)}</span></p>
 </div>`;
   }
 
@@ -688,13 +688,16 @@ function bindEvents() {
   els.loadArticles.addEventListener('click', loadArticlesFromNotion);
   els.toggleMeta.addEventListener('click', () => setMetaOpen(els.metaDrawer.classList.contains('is-collapsed')));
   els.closeMeta.addEventListener('click', () => setMetaOpen(false));
-  els.minimizeComposer.addEventListener('click', () => document.body.classList.toggle('composer-minimized'));
+  els.minimizeComposer.addEventListener('click', () => {
+    document.body.classList.toggle('composer-minimized');
+    fitPreviewFrame();
+  });
   els.publishPrev.addEventListener('click', () => shiftPublishDate(-1));
   els.publishNext.addEventListener('click', () => shiftPublishDate(1));
   els.publishToday.addEventListener('click', () => setPublishDate(new Date()));
   els.publishClear.addEventListener('click', () => setPublishDate(null));
   els.saveDraft.addEventListener('click', saveDraft);
-  els.toggleComposerFloat.addEventListener('click', () => document.body.classList.toggle('composer-floating'));
+  els.toggleComposerFloat.addEventListener('click', () => setComposerFloating(!document.body.classList.contains('composer-floating')));
   els.closeExport.addEventListener('click', () => setExportOpen(false));
   els.toggleExport.addEventListener('click', () => setExportOpen(els.cafeExportPanel.classList.contains('is-collapsed')));
   els.toggleSidebar.addEventListener('click', () => document.body.classList.toggle('sidebar-collapsed'));
@@ -727,6 +730,7 @@ function bindEvents() {
   });
 
   bindFloatingComposerDrag();
+  bindFixedComposerResize();
 
   els.previewFrame.addEventListener('load', () => {
     state.previewReady = true;
@@ -1438,7 +1442,7 @@ function textChildrenToArticleHtml(block) {
     const html = richHtmlToArticleInlineHtml(child.html);
     if (!html) return '';
     if (child.type === 'subheading') {
-      return `  <h2 class="mid-title">${html}</h2>`;
+      return `  <p class="basic-p"><span class="arti-h">${html}</span></p>`;
     }
     return `  <p class="basic-p">${html}</p>`;
   }).filter(Boolean).join('\n');
@@ -1704,7 +1708,7 @@ function createStarterBlocks(article) {
 }
 
 function setViewport(width) {
-  state.viewportWidth = Number(width);
+  state.viewportWidth = Math.max(320, Math.min(1920, Number(width)));
   els.viewportRange.value = state.viewportWidth;
   els.viewportLabel.textContent = `${state.viewportWidth}px`;
   fitPreviewFrame();
@@ -1722,6 +1726,21 @@ function fitPreviewFrame() {
   els.previewFrame.style.height = `${iframeHeight}px`;
   els.previewFrame.style.transform = `scale(${scale})`;
   els.previewFrame.style.transformOrigin = 'top left';
+}
+
+function setComposerFloating(isFloating) {
+  const composer = document.querySelector('.composer');
+  document.body.classList.toggle('composer-floating', isFloating);
+  if (isFloating) {
+    document.body.classList.remove('composer-minimized');
+  } else if (composer) {
+    composer.style.left = '';
+    composer.style.top = '';
+    composer.style.right = '';
+    composer.style.width = '';
+    composer.style.height = '';
+  }
+  fitPreviewFrame();
 }
 
 function markSelected(blockId) {
@@ -1773,6 +1792,41 @@ function bindFloatingComposerDrag() {
     if (!drag || drag.pointerId !== event.pointerId) return;
     drag = null;
     handle.releasePointerCapture(event.pointerId);
+  });
+}
+
+function bindFixedComposerResize() {
+  const composer = document.querySelector('.composer');
+  const handle = document.querySelector('.composer-resize-handle');
+  if (!composer || !handle) return;
+
+  let resize = null;
+  handle.addEventListener('pointerdown', event => {
+    if (document.body.classList.contains('composer-floating') || document.body.classList.contains('composer-minimized')) return;
+    resize = { pointerId: event.pointerId };
+    document.body.classList.add('is-resizing-composer');
+    handle.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  });
+
+  handle.addEventListener('pointermove', event => {
+    if (!resize || resize.pointerId !== event.pointerId) return;
+    const maxWidth = Math.min(680, Math.round(window.innerWidth * 0.48));
+    const nextWidth = Math.max(320, Math.min(maxWidth, window.innerWidth - event.clientX));
+    document.documentElement.style.setProperty('--composer-width', `${nextWidth}px`);
+    fitPreviewFrame();
+  });
+
+  handle.addEventListener('pointerup', event => {
+    if (!resize || resize.pointerId !== event.pointerId) return;
+    resize = null;
+    document.body.classList.remove('is-resizing-composer');
+    handle.releasePointerCapture(event.pointerId);
+  });
+
+  handle.addEventListener('pointercancel', () => {
+    resize = null;
+    document.body.classList.remove('is-resizing-composer');
   });
 }
 
