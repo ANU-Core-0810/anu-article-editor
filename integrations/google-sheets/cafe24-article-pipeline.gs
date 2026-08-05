@@ -368,6 +368,9 @@ function handleApiAction_(payload) {
     case 'listArticles':
       return listArticlesForApi_(payload);
 
+    case 'inspectNotionSchema':
+      return inspectNotionSchemaForApi_();
+
     case 'generateArticleCode':
       return {
         message: 'Article code ready',
@@ -392,14 +395,14 @@ function saveEditorDataFromApi_(payload) {
   }
 
   const editorPage = getEditorPage_(editorPageId, {});
-  const properties = pickExistingProperties_(editorPage, {
-    '이름': titleProperty_(payload.meta && payload.meta.koreanTitle),
-    'HTML 출력': richTextProperty_(html),
-    [CONFIG.editorDataPropertyName]: richTextProperty_(JSON.stringify(editorData, null, 2)),
-    '피드백': richTextProperty_('Saved from ANU Article Studio'),
-    '변환 상태': selectProperty_('웹에디터 저장'),
-    '변환기 버전': richTextProperty_(CONFIG.webEditorVersion),
-    '변환 시각': dateProperty_(new Date()),
+  const properties = buildWritablePropertiesForPage_(editorPage, {
+    '이름': { value: payload.meta && payload.meta.koreanTitle, kind: 'title' },
+    'HTML 출력': { value: html, kind: 'text' },
+    [CONFIG.editorDataPropertyName]: { value: JSON.stringify(editorData, null, 2), kind: 'text' },
+    '피드백': { value: 'Saved from ANU Article Studio', kind: 'text' },
+    '변환 상태': { value: '웹에디터 저장', kind: 'select' },
+    '변환기 버전': { value: CONFIG.webEditorVersion, kind: 'text' },
+    '변환 시각': { value: new Date(), kind: 'datetime' },
   });
 
   if (Object.keys(properties).length) {
@@ -411,9 +414,15 @@ function saveEditorDataFromApi_(payload) {
     updateArticleMetaFromApi_(articlePageId, payload.meta || {});
   }
 
-  return {
+  const result = {
     message: 'Editor data saved to Notion',
   };
+
+  if (articlePageId) {
+    result.article = articlePageToApiObject_(getEditorPage_(articlePageId, {}), {});
+  }
+
+  return result;
 }
 
 function listArticlesForApi_(payload) {
@@ -429,6 +438,7 @@ function listArticlesForApi_(payload) {
   const articles = pages.map((page) => articlePageToApiObject_(page, editorCache));
   return {
     message: `Loaded ${articles.length} article(s) from Notion`,
+    summary: buildArticleListSummary_(articles),
     articles,
   };
 }
@@ -439,7 +449,7 @@ function articlePageToApiObject_(page, editorCache) {
   const editor = editorId ? getEditorPage_(editorId, editorCache) : null;
   const editorProps = editor && editor.properties ? editor.properties : {};
 
-  return {
+  const article = {
     articlePageId: page.id,
     notionUrl: page.url || '',
     status: statusName_(props['상태']),
@@ -457,6 +467,19 @@ function articlePageToApiObject_(page, editorCache) {
     html: editor ? plainText_(editorProps['HTML 출력']) : '',
     editorData: parseEditorData_(editor),
   };
+
+  article.warnings = buildArticleApiWarnings_(article, props, editorProps);
+  article.notionTypes = {
+    status: propertyType_(props['상태']),
+    englishTitle: propertyType_(props['제목(영문)']),
+    koreanTitle: propertyType_(editorProps['이름']),
+    articleCode: propertyType_(props['아티클코드']),
+    category: propertyType_(props['카테고리']),
+    type: propertyType_(props['타입']),
+    editor: propertyType_(props['편집기']),
+  };
+
+  return article;
 }
 
 function parseEditorData_(editor) {
@@ -476,22 +499,132 @@ function parseEditorData_(editor) {
 
 function updateArticleMetaFromApi_(articlePageId, meta) {
   const articlePage = getEditorPage_(articlePageId, {});
-  const properties = pickExistingProperties_(articlePage, {
-    '상태': statusProperty_(meta.status),
-    '제목(영문)': titleProperty_(meta.englishTitle),
-    '아티클코드': richTextProperty_(meta.code),
-    '요약(Deck)': richTextProperty_(meta.deck),
-    '카테고리': selectProperty_(meta.category),
-    '타입': selectProperty_(meta.type),
-    '발행일': dateOnlyProperty_(meta.publishDate),
-    '카페24 상품번호': numberProperty_(meta.cafe24ProductNo),
-    '카페24 상품코드': richTextProperty_(meta.cafe24ProductCode),
-    '상품분류 번호': richTextProperty_(meta.productCategoryIds || CONFIG.defaultCategoryIds),
+  const properties = buildWritablePropertiesForPage_(articlePage, {
+    '상태': { value: meta.status, kind: 'status' },
+    '제목(영문)': { value: meta.englishTitle, kind: 'title' },
+    '아티클코드': { value: meta.code, kind: 'text' },
+    '요약(Deck)': { value: meta.deck, kind: 'text' },
+    '카테고리': { value: meta.category, kind: 'select' },
+    '타입': { value: meta.type, kind: 'select' },
+    '발행일': { value: meta.publishDate, kind: 'date' },
+    '카페24 상품번호': { value: meta.cafe24ProductNo, kind: 'number' },
+    '카페24 상품코드': { value: meta.cafe24ProductCode, kind: 'text' },
+    '상품분류 번호': { value: meta.productCategoryIds || CONFIG.defaultCategoryIds, kind: 'text' },
   });
 
   if (Object.keys(properties).length) {
     updateNotionPage_(articlePageId, properties);
   }
+}
+
+function inspectNotionSchemaForApi_() {
+  const articleSchema = getDataSourceSchema_(CONFIG.articleDataSourceId);
+  const editorSchema = getDataSourceSchema_(CONFIG.editorDataSourceId);
+  const expected = getExpectedNotionProperties_();
+  const missing = {
+    article: expected.article.filter((name) => !articleSchema.properties[name]),
+    editor: expected.editor.filter((name) => !editorSchema.properties[name]),
+  };
+  const mismatch = {
+    article: expected.article
+      .filter((name) => articleSchema.properties[name])
+      .map((name) => ({
+        name,
+        type: articleSchema.properties[name].type || '',
+      })),
+    editor: expected.editor
+      .filter((name) => editorSchema.properties[name])
+      .map((name) => ({
+        name,
+        type: editorSchema.properties[name].type || '',
+      })),
+  };
+  const missingCount = missing.article.length + missing.editor.length;
+
+  return {
+    message: missingCount ? `Notion schema checked: ${missingCount} missing property(s)` : 'Notion schema checked',
+    expected,
+    missing,
+    matched: mismatch,
+    articleProperties: schemaPropertyList_(articleSchema),
+    editorProperties: schemaPropertyList_(editorSchema),
+  };
+}
+
+function getDataSourceSchema_(dataSourceId) {
+  const source = notionFetch_(`/v1/data_sources/${dataSourceId}`, { method: 'get' });
+  return {
+    id: source.id || dataSourceId,
+    title: richTextArrayToPlain_(source.title || []),
+    properties: source.properties || {},
+  };
+}
+
+function schemaPropertyList_(schema) {
+  return Object.keys(schema.properties || {})
+    .sort()
+    .map((name) => ({
+      name,
+      type: schema.properties[name].type || '',
+    }));
+}
+
+function getExpectedNotionProperties_() {
+  return {
+    article: [
+      '상태',
+      '제목(영문)',
+      '편집기',
+      '아티클코드',
+      '요약(Deck)',
+      '카테고리',
+      '타입',
+      '발행일',
+      '카페24 상품번호',
+      '카페24 상품코드',
+      '상품분류 번호',
+    ],
+    editor: [
+      '이름',
+      'HTML 출력',
+      CONFIG.editorDataPropertyName,
+      '피드백',
+      '변환 상태',
+      '변환기 버전',
+      '변환 시각',
+    ],
+  };
+}
+
+function buildArticleApiWarnings_(article, articleProps, editorProps) {
+  const warnings = [];
+  if (!article.articleCode) warnings.push('아티클 코드 없음');
+  if (!article.editorPageId) warnings.push('편집기 연결 없음');
+  if (article.editorPageId && !article.editorData) warnings.push('에디터 데이터 없음');
+  if (article.editorPageId && !article.html) warnings.push('HTML 출력 없음');
+  if (!article.koreanTitle) warnings.push('한글 제목 없음');
+  if (!article.category) warnings.push('카테고리 없음');
+  if (!article.type) warnings.push('타입 없음');
+  if (!article.productCategoryIds) warnings.push('상품분류 번호 없음');
+
+  const expected = getExpectedNotionProperties_();
+  expected.article.forEach((name) => {
+    if (!articleProps[name]) warnings.push(`아티클 DB 속성 없음: ${name}`);
+  });
+  expected.editor.forEach((name) => {
+    if (article.editorPageId && !editorProps[name]) warnings.push(`편집기 DB 속성 없음: ${name}`);
+  });
+
+  return warnings;
+}
+
+function buildArticleListSummary_(articles) {
+  const warningCount = articles.reduce((total, article) => total + ((article.warnings || []).length ? 1 : 0), 0);
+  return {
+    total: articles.length,
+    warningCount,
+    readyCount: articles.length - warningCount,
+  };
 }
 
 function generateNextArticleCode_() {
@@ -972,33 +1105,81 @@ function firstRelationId_(property) {
 }
 
 function titleText_(property) {
-  return richTextArrayToPlain_(property && property.title);
+  if (!property) return '';
+  if (property.title) return richTextArrayToPlain_(property.title);
+  return plainText_(property);
 }
 
 function plainText_(property) {
   if (!property) return '';
+  if (property.title) return richTextArrayToPlain_(property.title);
   if (property.rich_text) return richTextArrayToPlain_(property.rich_text);
-  if (property.formula) return property.formula.string || String(property.formula.number || '');
+  if (property.number !== undefined && property.number !== null) return String(property.number);
+  if (property.select) return property.select ? property.select.name : '';
+  if (property.status) return property.status ? property.status.name : '';
+  if (property.multi_select) return property.multi_select.map((item) => item.name).join(', ');
+  if (property.date) return property.date.start || '';
+  if (property.formula) {
+    if (property.formula.string !== undefined && property.formula.string !== null) return property.formula.string;
+    if (property.formula.number !== undefined && property.formula.number !== null) return String(property.formula.number);
+    if (property.formula.boolean !== undefined && property.formula.boolean !== null) return property.formula.boolean ? 'true' : 'false';
+    if (property.formula.date) return property.formula.date.start || '';
+  }
   if (property.rollup && property.rollup.array) {
     return property.rollup.array.map(plainText_).filter(Boolean).join('\n');
   }
+  if (property.rollup && property.rollup.number !== undefined && property.rollup.number !== null) {
+    return String(property.rollup.number);
+  }
+  if (property.rollup && property.rollup.date) return property.rollup.date.start || '';
   return '';
 }
 
 function selectName_(property) {
-  return property && property.select ? property.select.name : '';
+  if (!property) return '';
+  if (property.select) return property.select.name;
+  if (property.status) return property.status.name;
+  if (property.multi_select) return property.multi_select.map((item) => item.name).join(', ');
+  return plainText_(property);
 }
 
 function statusName_(property) {
-  return property && property.status ? property.status.name : '';
+  if (!property) return '';
+  if (property.status) return property.status.name;
+  if (property.select) return property.select.name;
+  return plainText_(property);
 }
 
 function dateStart_(property) {
-  return property && property.date ? property.date.start : '';
+  if (!property) return '';
+  if (property.date) return property.date.start || '';
+  if (property.formula && property.formula.date) return property.formula.date.start || '';
+  return plainText_(property);
 }
 
 function numberValue_(property) {
-  return property && property.number ? property.number : '';
+  if (!property) return '';
+  if (property.number !== undefined && property.number !== null) return property.number;
+  const text = plainText_(property).replace(/,/g, '').trim();
+  if (!text) return '';
+  const number = Number(text);
+  return Number.isFinite(number) ? number : '';
+}
+
+function propertyType_(property) {
+  if (!property) return '';
+  return property.type || Object.keys(property).find((key) => [
+    'title',
+    'rich_text',
+    'number',
+    'select',
+    'multi_select',
+    'status',
+    'date',
+    'formula',
+    'relation',
+    'rollup',
+  ].includes(key)) || '';
 }
 
 function richTextArrayToPlain_(items) {
@@ -1035,6 +1216,14 @@ function statusProperty_(name) {
   return name ? { status: { name } } : { status: null };
 }
 
+function multiSelectProperty_(value) {
+  const names = String(value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return { multi_select: names.map((name) => ({ name })) };
+}
+
 function numberProperty_(value) {
   const text = String(value || '').trim();
   if (!text) return { number: null };
@@ -1061,6 +1250,44 @@ function pickExistingProperties_(page, properties) {
     }
     return acc;
   }, {});
+}
+
+function buildWritablePropertiesForPage_(page, definitions) {
+  const existing = page && page.properties ? page.properties : {};
+  return Object.keys(definitions).reduce((acc, key) => {
+    if (!Object.prototype.hasOwnProperty.call(existing, key)) return acc;
+    const update = propertyUpdateForExistingType_(existing[key], definitions[key]);
+    if (update) acc[key] = update;
+    return acc;
+  }, {});
+}
+
+function propertyUpdateForExistingType_(existingProperty, definition) {
+  const type = propertyType_(existingProperty);
+  const value = definition && Object.prototype.hasOwnProperty.call(definition, 'value')
+    ? definition.value
+    : definition;
+  const kind = definition && definition.kind ? definition.kind : '';
+
+  if (type === 'title') return titleProperty_(value);
+  if (type === 'rich_text') return richTextProperty_(value);
+  if (type === 'number') return numberProperty_(value);
+  if (type === 'date') return kind === 'datetime' ? dateProperty_(value instanceof Date ? value : new Date(value)) : dateOnlyProperty_(value);
+  if (type === 'select') return selectProperty_(value);
+  if (type === 'status') return statusProperty_(value);
+  if (type === 'multi_select') return multiSelectProperty_(value);
+
+  if (['formula', 'rollup', 'relation', 'created_time', 'created_by', 'last_edited_time', 'last_edited_by'].includes(type)) {
+    return null;
+  }
+
+  if (kind === 'title') return titleProperty_(value);
+  if (kind === 'number') return numberProperty_(value);
+  if (kind === 'date') return dateOnlyProperty_(value);
+  if (kind === 'datetime') return dateProperty_(value instanceof Date ? value : new Date(value));
+  if (kind === 'status') return statusProperty_(value);
+  if (kind === 'select') return selectProperty_(value);
+  return richTextProperty_(value);
 }
 
 function parseApiPayload_(event) {

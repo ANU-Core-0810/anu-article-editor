@@ -31,6 +31,7 @@ const state = {
   articles: [],
   articleQuery: '',
   articleStatusFilter: 'all',
+  notionDiagnostics: null,
   meta: {
     englishTitle: 'What Makes a Good Bowl',
     koreanTitle: '손의 경험 | 좋은 보울을 만드는 요소',
@@ -105,10 +106,12 @@ const els = {
   gasToken: document.getElementById('gasToken'),
   importJson: document.getElementById('importJson'),
   importJsonInput: document.getElementById('importJsonInput'),
+  inspectNotion: document.getElementById('inspectNotion'),
   loadArticles: document.getElementById('loadArticles'),
   closeMeta: document.getElementById('closeMeta'),
   metaDrawer: document.getElementById('metaDrawer'),
   minimizeComposer: document.getElementById('minimizeComposer'),
+  notionDiagnostics: document.getElementById('notionDiagnostics'),
   previewFrame: document.getElementById('previewFrame'),
   productCategoryIds: document.getElementById('productCategoryIds'),
   publishClear: document.getElementById('publishClear'),
@@ -711,6 +714,7 @@ function bindEvents() {
     els.importJsonInput.click();
   });
   els.importJsonInput.addEventListener('change', importJsonFile);
+  els.inspectNotion.addEventListener('click', inspectNotionIntegration);
   els.articleSearch.addEventListener('input', event => {
     state.articleQuery = event.target.value;
     renderArticleList();
@@ -1680,10 +1684,14 @@ function renderArticleList() {
 
   els.articleList.innerHTML = filteredArticles.map(({ article, index }) => {
     const selected = article.articlePageId && article.articlePageId === state.meta.articlePageId ? ' is-active' : '';
-    return `<button class="article-row${selected}" type="button" data-article-index="${index}">
+    const warnings = Array.isArray(article.warnings) ? article.warnings : [];
+    const warningClass = warnings.length ? ' has-warning' : '';
+    const warningText = warnings.length ? `<small title="${escapeAttr(warnings.join('\n'))}">${warnings.length}개 확인 필요</small>` : '';
+    return `<button class="article-row${selected}${warningClass}" type="button" data-article-index="${index}">
       <span>${escapeHtml(article.articleCode || 'NO-CODE')}</span>
       <strong>${escapeHtml(article.koreanTitle || article.englishTitle || 'Untitled')}</strong>
       <em>${escapeHtml(article.status || '')}</em>
+      ${warningText}
     </button>`;
   }).join('');
 }
@@ -2035,6 +2043,10 @@ async function runGasAction(action) {
       downloadText(result.csv, result.filename || `${action}.csv`, result.mimeType || 'text/csv;charset=utf-8');
     }
     if (result.sheetUrl) window.open(result.sheetUrl, '_blank', 'noopener');
+    if (result.article) {
+      mergeArticleFromApi(result.article);
+      renderArticleList();
+    }
     markGasState(result.message || 'Done');
   } catch (error) {
     markGasState(error.message || 'Failed');
@@ -2075,12 +2087,74 @@ async function loadArticlesFromNotion() {
     const result = await callGasApi('listArticles', { includeAll: true });
     state.articles = result.articles || [];
     renderArticleList();
-    markGasState(result.message || `Loaded ${state.articles.length}`);
+    renderNotionDiagnostics({
+      message: buildNotionLoadSummary(result),
+      summary: result.summary || null,
+    });
+    markGasState(buildNotionLoadSummary(result));
     markSaved('Loaded');
   } catch (error) {
     markGasState(error.message || 'Load failed');
     markSaved('Load failed');
   }
+}
+
+async function inspectNotionIntegration() {
+  try {
+    closeUtilityMenu();
+    setExportOpen(true);
+    markGasState('노션 점검 중');
+    const result = await callGasApi('inspectNotionSchema');
+    state.notionDiagnostics = result;
+    renderNotionDiagnostics(result);
+    markGasState(result.message || '노션 점검 완료');
+  } catch (error) {
+    markGasState(error.message || '노션 점검 실패');
+    renderNotionDiagnostics({
+      message: error.message || '노션 점검 실패',
+      error: true,
+    });
+  }
+}
+
+function mergeArticleFromApi(article) {
+  const index = state.articles.findIndex(item => item.articlePageId === article.articlePageId);
+  if (index >= 0) {
+    state.articles[index] = Object.assign({}, state.articles[index], article);
+    return;
+  }
+  state.articles.unshift(article);
+}
+
+function buildNotionLoadSummary(result) {
+  const summary = result.summary || {};
+  const total = summary.total ?? (result.articles || []).length;
+  const warningCount = summary.warningCount || 0;
+  return warningCount ? `노션 ${total}개 불러옴 · ${warningCount}개 확인 필요` : `노션 ${total}개 불러옴`;
+}
+
+function renderNotionDiagnostics(result) {
+  if (!els.notionDiagnostics) return;
+  const missing = result.missing || {};
+  const articleMissing = missing.article || [];
+  const editorMissing = missing.editor || [];
+  const chips = [
+    ...articleMissing.map(name => `아티클 DB · ${name}`),
+    ...editorMissing.map(name => `편집기 DB · ${name}`),
+  ];
+
+  const summary = result.summary
+    ? `<p>총 ${escapeHtml(result.summary.total || 0)}개 중 ${escapeHtml(result.summary.warningCount || 0)}개 글에 연동 확인 항목이 있습니다.</p>`
+    : '';
+
+  els.notionDiagnostics.hidden = false;
+  els.notionDiagnostics.classList.toggle('has-error', Boolean(result.error || chips.length));
+  els.notionDiagnostics.innerHTML = `
+    <strong>${escapeHtml(result.error ? '노션 점검 실패' : '노션 연동 상태')}</strong>
+    <p>${escapeHtml(result.message || '노션 상태를 확인했습니다.')}</p>
+    ${summary}
+    ${chips.length ? `<div>${chips.map(label => `<span>${escapeHtml(label)}</span>`).join('')}</div>` : ''}
+  `;
 }
 
 async function generateAndSetArticleCode() {

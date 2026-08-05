@@ -246,6 +246,7 @@ body.sidebar-collapsed .sidebar {
   display: grid;
   gap: 5px;
   border: 0;
+  border-left: 2px solid transparent;
   border-radius: 8px;
   background: transparent;
   padding: 12px;
@@ -274,6 +275,21 @@ body.sidebar-collapsed .sidebar {
   font-size: 13px;
   font-weight: 700;
   line-height: 1.36;
+}
+
+.article-row small {
+  width: fit-content;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #9a3412;
+  padding: 3px 7px;
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 1;
+}
+
+.article-row.has-warning {
+  border-left-color: #f59e0b;
 }
 
 .empty-state {
@@ -1416,6 +1432,49 @@ body.composer-minimized .composer > .block-list {
 
 .panel-state {
   color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.notion-diagnostics {
+  display: grid;
+  gap: 8px;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: var(--ink);
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.notion-diagnostics[hidden] {
+  display: none;
+}
+
+.notion-diagnostics.has-error {
+  background: #fff7ed;
+}
+
+.notion-diagnostics strong {
+  font-size: 12px;
+}
+
+.notion-diagnostics p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.notion-diagnostics div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.notion-diagnostics span {
+  border-radius: 999px;
+  background: #fff;
+  color: #9a3412;
+  padding: 4px 7px;
   font-size: 11px;
   font-weight: 700;
 }
