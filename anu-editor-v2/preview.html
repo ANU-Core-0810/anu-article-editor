@@ -48,23 +48,100 @@
       text-rendering: optimizeLegibility;
     }
 
+    .preview-site-promo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      background: #ddd;
+      color: #111;
+      font-family: var(--font-pretendard, "Pretendard Variable", sans-serif);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1;
+      position: relative;
+    }
+
+    .preview-site-promo button {
+      position: absolute;
+      top: 50%;
+      right: 12px;
+      width: 22px;
+      height: 22px;
+      border: 0;
+      background: transparent;
+      color: #111;
+      padding: 0;
+      font-size: 24px;
+      line-height: 1;
+      transform: translateY(-50%);
+    }
+
+    .preview-site-header {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) auto minmax(180px, 1fr);
+      align-items: start;
+      min-height: clamp(150px, 10.8vw, 206px);
+      padding: clamp(22px, 2.45vw, 42px) clamp(24px, 3vw, 58px) 0;
+      background: #fff;
+      color: #111;
+    }
+
+    .preview-site-logo {
+      font-family: var(--font-akkurat, "AkkuratLLWeb", sans-serif);
+      font-size: clamp(76px, 5.55vw, 106px);
+      font-weight: 700;
+      line-height: 0.76;
+      letter-spacing: 0;
+    }
+
+    .preview-site-nav,
+    .preview-site-actions {
+      display: flex;
+      gap: clamp(28px, 2.6vw, 48px);
+      padding-top: clamp(16px, 1.9vw, 34px);
+      font-family: var(--font-akkurat, "AkkuratLLWeb", sans-serif);
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .preview-site-actions {
+      justify-content: flex-end;
+      gap: clamp(18px, 1.6vw, 30px);
+    }
+
+    .preview-mobile-actions {
+      display: none;
+    }
+
     .preview-shell {
       overflow: hidden;
-      padding: clamp(88px, 8.5vw, 158px) 0 112px;
+      padding: clamp(56px, 5.4vw, 104px) 0 112px;
     }
 
     .preview-hero {
       display: grid;
       grid-template-columns: minmax(0, 1.65fr) minmax(360px, 0.78fr);
-      align-items: end;
+      align-items: start;
       gap: clamp(48px, 7vw, 132px);
       width: 100%;
       margin: 0 auto clamp(44px, 4.4vw, 72px);
-      padding: 0 clamp(24px, 3.8vw, 68px);
+      padding: 0 clamp(42px, 5.2vw, 92px);
+    }
+
+    .preview-title-column,
+    .preview-copy-column {
+      min-width: 0;
+    }
+
+    .preview-copy-column {
+      padding-top: clamp(2px, 0.42vw, 8px);
     }
 
     .preview-kicker {
-      margin: 0 0 20px;
+      margin: 0 0 18px;
       color: #111;
       font-family: var(--font-akkurat, "AkkuratLLWeb", sans-serif);
       font-size: 13px;
@@ -170,8 +247,79 @@
     }
 
     @media (max-width: 767px) {
+      .preview-site-promo {
+        min-height: 42px;
+        font-size: 16px;
+      }
+
+      .preview-site-promo button {
+        right: 10px;
+        font-size: 30px;
+      }
+
+      .preview-site-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        min-height: 132px;
+        padding: 22px 22px 0;
+      }
+
+      .preview-site-logo {
+        font-size: 59px;
+        line-height: 0.86;
+      }
+
+      .preview-site-nav,
+      .preview-site-actions {
+        display: none;
+      }
+
+      .preview-mobile-actions {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding-top: 7px;
+      }
+
+      .preview-mobile-cart {
+        position: relative;
+        width: 28px;
+        height: 30px;
+        border: 2px solid #111;
+        border-top: 0;
+        font-family: var(--font-akkurat, "AkkuratLLWeb", sans-serif);
+        font-size: 12px;
+        line-height: 30px;
+        text-align: center;
+      }
+
+      .preview-mobile-cart::before {
+        position: absolute;
+        top: -8px;
+        left: 7px;
+        width: 10px;
+        height: 10px;
+        border: 2px solid #111;
+        border-bottom: 0;
+        border-radius: 999px 999px 0 0;
+        content: "";
+      }
+
+      .preview-mobile-menu {
+        display: grid;
+        width: 30px;
+        gap: 7px;
+      }
+
+      .preview-mobile-menu span {
+        display: block;
+        height: 2px;
+        background: #111;
+      }
+
       .preview-shell {
-        padding: 64px 0 84px;
+        padding: 44px 0 84px;
       }
 
       .preview-hero {
@@ -179,6 +327,10 @@
         gap: 24px;
         margin-bottom: 28px;
         padding: 0 22px;
+      }
+
+      .preview-copy-column {
+        padding-top: 0;
       }
 
       .preview-kicker {
@@ -207,13 +359,38 @@
   </style>
 </head>
 <body>
+  <header class="preview-site">
+    <div class="preview-site-promo">
+      <span>5주년 기념 최대 50% 할인</span>
+      <button type="button" aria-label="닫기">×</button>
+    </div>
+    <div class="preview-site-header">
+      <div class="preview-site-logo" aria-label="anu">anu</div>
+      <nav class="preview-site-nav" aria-label="주요 메뉴">
+        <span>Shop</span>
+        <span>Article</span>
+        <span>Support</span>
+        <span>Search</span>
+      </nav>
+      <div class="preview-site-actions">
+        <span>Login</span>
+        <span>Cart (0)</span>
+      </div>
+      <div class="preview-mobile-actions" aria-hidden="true">
+        <span class="preview-mobile-cart">0</span>
+        <span class="preview-mobile-menu"><span></span><span></span><span></span></span>
+      </div>
+    </div>
+  </header>
   <main class="preview-shell">
     <section class="preview-hero">
-      <div>
-        <p id="previewCategory" class="preview-kicker">CRAFT / GUIDE / 2026-07-31</p>
+      <div class="preview-title-column">
         <h1 id="previewTitle" class="preview-title">What Makes a Good Bowl<span>손의 경험 | 좋은 보울을 만드는 요소</span></h1>
       </div>
-      <p id="previewDeck" class="preview-deck">손의 촉감, 무게감, 곡선이 좋은 보울을 완성하는 방식을 살펴봅니다.</p>
+      <div class="preview-copy-column">
+        <p id="previewCategory" class="preview-kicker">CRAFT / GUIDE / 2026-07-31</p>
+        <p id="previewDeck" class="preview-deck">손의 촉감, 무게감, 곡선이 좋은 보울을 완성하는 방식을 살펴봅니다.</p>
+      </div>
     </section>
     <section id="previewBody" class="preview-body">
       <div class="arti-body">
