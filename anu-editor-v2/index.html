@@ -98,11 +98,11 @@
         <div class="topbar__actions">
           <button class="ui-button ui-button--ghost" type="button" id="toggleSidebar" aria-label="Toggle article list">
             <i data-lucide="panel-left" aria-hidden="true"></i>
-            <span>Articles</span>
+            <span>목록</span>
           </button>
           <button class="ui-button ui-button--secondary" type="button" id="loadArticles">
             <i data-lucide="refresh-cw" aria-hidden="true"></i>
-            <span>Load Notion</span>
+            <span>불러오기</span>
           </button>
           <button class="ui-button ui-button--secondary" type="button" id="toggleExport">
             <i data-lucide="file-down" aria-hidden="true"></i>
@@ -111,18 +111,18 @@
           <details class="utility-menu">
             <summary class="ui-button ui-button--ghost" aria-label="More actions">
               <i data-lucide="more-horizontal" aria-hidden="true"></i>
-              <span>More</span>
+              <span>더보기</span>
             </summary>
             <div class="utility-menu__content">
-              <button type="button" id="saveDraft"><i data-lucide="hard-drive" aria-hidden="true"></i>Save local draft</button>
-              <button type="button" id="copyHtml"><i data-lucide="code-2" aria-hidden="true"></i>Copy HTML</button>
-              <button type="button" id="copyJson"><i data-lucide="braces" aria-hidden="true"></i>Copy JSON</button>
-              <button type="button" id="importJson"><i data-lucide="upload" aria-hidden="true"></i>Import JSON</button>
+              <button type="button" id="saveDraft"><i data-lucide="hard-drive" aria-hidden="true"></i>로컬 임시저장</button>
+              <button type="button" id="copyHtml"><i data-lucide="code-2" aria-hidden="true"></i>HTML 복사</button>
+              <button type="button" id="copyJson"><i data-lucide="braces" aria-hidden="true"></i>JSON 복사</button>
+              <button type="button" id="importJson"><i data-lucide="upload" aria-hidden="true"></i>JSON 가져오기</button>
             </div>
           </details>
           <button class="ui-button ui-button--primary" type="button" data-gas-action="saveEditorData">
             <i data-lucide="database" aria-hidden="true"></i>
-            <span>Save to Notion</span>
+            <span>Notion 저장</span>
           </button>
           <input id="importJsonInput" class="sr-only" type="file" accept="application/json,.json">
         </div>
@@ -142,11 +142,11 @@
             <div class="panel__head">
               <div>
                 <p class="panel-eyebrow">Article</p>
-                <h2>Publishing details</h2>
+                <h2>아티클 정보</h2>
               </div>
               <button class="ui-button ui-button--ghost" type="button" id="toggleComposerFloat">
                 <i data-lucide="panel-right-open" aria-hidden="true"></i>
-                Overlay
+                띄우기
               </button>
             </div>
             <div class="meta-grid">
@@ -166,7 +166,7 @@
               </label>
               <button class="ui-button ui-button--secondary field-button" type="button" id="generateArticleCode">
                 <i data-lucide="hash" aria-hidden="true"></i>
-                Generate
+                생성
               </button>
               <label class="field">
                 <span>Category</span>
@@ -227,7 +227,7 @@
             <div class="panel__head">
               <div>
                 <p class="panel-eyebrow">Blocks</p>
-                <h2>Content structure</h2>
+                <h2>본문 구성</h2>
               </div>
             </div>
             <div class="block-tools" aria-label="Add block">
@@ -252,7 +252,7 @@
             <div class="panel__head">
               <div>
                 <p class="panel-eyebrow">Cafe24</p>
-                <h2>Export actions</h2>
+                <h2>내보내기</h2>
               </div>
               <div class="panel__actions">
                 <span id="gasState" class="panel-state">Ready</span>
@@ -279,10 +279,10 @@
                 <input id="articlePageId" placeholder="아티클 DB page_id">
               </label>
               <div class="pipeline-actions">
-                <button class="ui-button ui-button--secondary" type="button" data-gas-action="saveEditorData"><i data-lucide="database" aria-hidden="true"></i>Save to Notion</button>
-                <button class="ui-button ui-button--secondary" type="button" data-gas-action="runAll"><i data-lucide="play" aria-hidden="true"></i>Run all</button>
-                <button class="ui-button ui-button--secondary" type="button" data-gas-action="exportRegistrationCsv"><i data-lucide="file-plus-2" aria-hidden="true"></i>Registration CSV</button>
-                <button class="ui-button ui-button--secondary" type="button" data-gas-action="exportUpdateCsv"><i data-lucide="file-pen-line" aria-hidden="true"></i>Update CSV</button>
+                <button class="ui-button ui-button--secondary" type="button" data-gas-action="saveEditorData"><i data-lucide="database" aria-hidden="true"></i>Notion 저장</button>
+                <button class="ui-button ui-button--secondary" type="button" data-gas-action="runAll"><i data-lucide="play" aria-hidden="true"></i>전체 실행</button>
+                <button class="ui-button ui-button--secondary" type="button" data-gas-action="exportRegistrationCsv"><i data-lucide="file-plus-2" aria-hidden="true"></i>등록 CSV</button>
+                <button class="ui-button ui-button--secondary" type="button" data-gas-action="exportUpdateCsv"><i data-lucide="file-pen-line" aria-hidden="true"></i>수정 CSV</button>
               </div>
             </div>
           </section>
@@ -292,7 +292,7 @@
           <div class="preview__toolbar">
             <div>
               <p class="panel-eyebrow">Preview</p>
-              <strong>Rendered article page</strong>
+              <strong>아티클 미리보기</strong>
             </div>
             <div class="preview-controls">
               <div class="segmented segmented--preview" role="group" aria-label="Preview size">
