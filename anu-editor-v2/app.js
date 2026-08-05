@@ -93,6 +93,8 @@ const els = {
   importJson: document.getElementById('importJson'),
   importJsonInput: document.getElementById('importJsonInput'),
   loadArticles: document.getElementById('loadArticles'),
+  closeMeta: document.getElementById('closeMeta'),
+  metaDrawer: document.getElementById('metaDrawer'),
   minimizeComposer: document.getElementById('minimizeComposer'),
   previewFrame: document.getElementById('previewFrame'),
   productCategoryIds: document.getElementById('productCategoryIds'),
@@ -106,6 +108,7 @@ const els = {
   saveState: document.getElementById('saveState'),
   toggleComposerFloat: document.getElementById('toggleComposerFloat'),
   toggleExport: document.getElementById('toggleExport'),
+  toggleMeta: document.getElementById('toggleMeta'),
   toggleSidebar: document.getElementById('toggleSidebar'),
   utilityMenu: document.querySelector('.utility-menu'),
   statusFilters: document.querySelectorAll('[data-status-filter]'),
@@ -195,7 +198,7 @@ ${items}
     const images = normalizeSlideImages(block.images).filter(Boolean).map((src, index) => `
         <div class="img-slide__item${index === 0 ? ' is-active' : ''}">
           <img src="${escapeAttr(normalizeImageUrl(src))}" alt="">
-          ${block.caption ? `<p hidden class="arti-caption">${escapeHtml(block.caption)}</p>` : ''}
+          ${block.caption ? `<p hidden class="arti-caption">${richHtmlToArticleInlineHtml(block.caption)}</p>` : ''}
         </div>`).join('');
 
     return `<div class="arti-block arti-block--wide" data-reveal>
@@ -247,21 +250,21 @@ function renderBlockList() {
 function blockEditorHtml(block, index) {
   const selected = block.id === state.selectedBlockId ? ' is-selected' : '';
   const label = blockLabel(block);
-  const group = TEXT_BLOCK_TYPES.includes(block.type) ? 'Text' : MEDIA_BLOCK_TYPES.includes(block.type) ? 'Media' : 'Block';
+  const group = TEXT_BLOCK_TYPES.includes(block.type) ? '글' : MEDIA_BLOCK_TYPES.includes(block.type) ? '미디어' : '블록';
 
   return `<article class="block-card${selected}" data-id="${block.id}" data-type="${block.type}">
     <div class="block-card__head">
       <div class="block-card__meta">
-        <button class="drag-handle" type="button" draggable="true" aria-label="Drag block" title="Drag to reorder">${iconHtml('grip-vertical')}</button>
+        <button class="drag-handle" type="button" draggable="true" aria-label="블록 순서 이동" title="끌어서 순서 변경">${iconHtml('grip-vertical')}</button>
         <strong>${label}</strong>
         <em>${group}</em>
         <span>${String(index + 1).padStart(2, '0')}</span>
       </div>
       <div class="block-actions" aria-label="Block actions">
-        <button type="button" data-block-action="moveUp" aria-label="Move up" title="Move up">${iconHtml('arrow-up')}</button>
-        <button type="button" data-block-action="moveDown" aria-label="Move down" title="Move down">${iconHtml('arrow-down')}</button>
-        <button type="button" data-block-action="duplicate" aria-label="Duplicate" title="Duplicate">${iconHtml('copy')}</button>
-        <button type="button" data-block-action="delete" aria-label="Delete" title="Delete">${iconHtml('trash-2')}</button>
+        <button type="button" data-block-action="moveUp" aria-label="위로 이동" title="위로">${iconHtml('arrow-up')}</button>
+        <button type="button" data-block-action="moveDown" aria-label="아래로 이동" title="아래로">${iconHtml('arrow-down')}</button>
+        <button type="button" data-block-action="duplicate" aria-label="복제" title="복제">${iconHtml('copy')}</button>
+        <button type="button" data-block-action="delete" aria-label="삭제" title="삭제">${iconHtml('trash-2')}</button>
       </div>
     </div>
     <div class="block-card__body">
@@ -272,39 +275,68 @@ function blockEditorHtml(block, index) {
 }
 
 function inlineAddHtml(index) {
-  return `<div class="inline-add" data-insert-after="${index}">
-    <span>아래에 추가</span>
-    <div class="inline-add__group" aria-label="Text blocks">
-      <button type="button" data-add-inline="text" title="텍스트">${iconHtml('type')}텍스트</button>
-      <button type="button" data-add-inline="quote" title="인용">${iconHtml('quote')}인용</button>
-      <button type="button" data-add-inline="credit" title="크레딧">${iconHtml('badge-info')}크레딧</button>
+  return `<details class="inline-add" data-insert-after="${index}">
+    <summary>${iconHtml('plus')}아래에 블록 추가</summary>
+    <div class="inline-add__menu">
+      <div class="inline-add__group" aria-label="글 블록">
+        <span>글</span>
+        <button type="button" data-add-inline="text" title="텍스트">${iconHtml('type')}텍스트</button>
+        <button type="button" data-add-inline="quote" title="인용">${iconHtml('quote')}인용</button>
+        <button type="button" data-add-inline="credit" title="크레딧">${iconHtml('badge-info')}크레딧</button>
+      </div>
+      <div class="inline-add__group" aria-label="미디어 블록">
+        <span>미디어</span>
+        <button type="button" data-add-inline="image" title="이미지">${iconHtml('image')}이미지</button>
+        <button type="button" data-add-inline="duo" title="이미지 듀오">${iconHtml('columns-2')}듀오</button>
+        <button type="button" data-add-inline="slide" title="슬라이드">${iconHtml('gallery-horizontal')}슬라이드</button>
+        <button type="button" data-add-inline="video" title="비디오">${iconHtml('video')}비디오</button>
+      </div>
     </div>
-    <div class="inline-add__group" aria-label="Media blocks">
-      <button type="button" data-add-inline="image" title="이미지">${iconHtml('image')}이미지</button>
-      <button type="button" data-add-inline="duo" title="이미지 듀오">${iconHtml('columns-2')}듀오</button>
-      <button type="button" data-add-inline="slide" title="슬라이드">${iconHtml('gallery-horizontal')}슬라이드</button>
-      <button type="button" data-add-inline="video" title="비디오">${iconHtml('video')}비디오</button>
-    </div>
-  </div>`;
+  </details>`;
 }
 
 function blockLabel(block) {
   const labels = {
-    text: 'Text',
-    quote: 'Quote',
-    credit: 'Credit',
-    image: block.layout || 'Image',
-    duo: block.layout || 'Duo',
-    slide: 'Slide',
-    video: block.videoType || 'Video',
+    text: '텍스트',
+    quote: '인용',
+    credit: '크레딧',
+    image: block.layout || '이미지',
+    duo: block.layout || '듀오',
+    slide: '슬라이드',
+    video: block.videoType === 'video-mp4' ? '비디오' : '유튜브',
   };
   return labels[block.type] || block.type.charAt(0).toUpperCase() + block.type.slice(1);
+}
+
+function uploadTileHtml({ src, target, label, attrs = '' }) {
+  const imageUrl = normalizeImageUrl(src);
+  return `<label class="image-thumb image-upload-tile">
+    <img src="${escapeAttr(imageUrl)}" alt="" onerror="this.hidden=true">
+    <span class="image-upload-tile__label">${iconHtml('upload-cloud')}${escapeHtml(label)}</span>
+    <input class="sr-only" type="file" accept="image/*" data-upload-target="${escapeAttr(target)}"${attrs ? ` ${attrs}` : ''}>
+  </label>`;
+}
+
+function captionEditorHtml(value, { key = 'captionRich', label = '캡션', attrs = '' } = {}) {
+  return `<div class="caption-editor">
+    <div class="caption-editor__head">
+      <span>${escapeHtml(label)}</span>
+      <div class="caption-toolbar" aria-label="캡션 서식">
+        <button type="button" data-caption-rich-action="bold" title="굵게">B</button>
+        <button type="button" data-caption-rich-action="underline" title="밑줄">U</button>
+        <button type="button" data-caption-rich-action="externalLink">외부 링크</button>
+        <button type="button" data-caption-rich-action="productLink">상품 링크</button>
+        <button type="button" data-caption-rich-action="popupLink">팝업 링크</button>
+      </div>
+    </div>
+    <div class="rich-caption-editor" contenteditable="true" data-key="${escapeAttr(key)}"${attrs ? ` ${attrs}` : ''} spellcheck="false">${sanitizeRichHtml(value) || '<br>'}</div>
+  </div>`;
 }
 
 function blockFieldsHtml(block) {
   if (block.type === 'text') {
     const textBlock = normalizeTextBlock(block);
-    return `<div class="rich-toolbar" aria-label="Text formatting">
+    return `<div class="rich-toolbar" aria-label="본문 서식">
       <button type="button" data-rich-action="paragraph">문단</button>
       <button type="button" data-rich-action="subheading">소제목</button>
       <button type="button" data-rich-action="bold">B</button>
@@ -319,36 +351,37 @@ function blockFieldsHtml(block) {
   }
 
   if (block.type === 'image') {
-    const imageUrl = normalizeImageUrl(block.src);
-    return `<div class="image-grid">
-      <div class="image-thumb"><img src="${escapeAttr(imageUrl)}" alt="" onerror="this.hidden=true"></div>
-      <div class="block-card__body">
-        <label class="field">
-          <span>이미지 경로 또는 URL</span>
-          <input data-key="src" value="${escapeAttr(block.src)}">
-        </label>
-        <label class="field">
-          <span>레이아웃</span>
-          <select data-key="layout">
-            ${IMAGE_LAYOUTS.map(value => optionHtml(value, block.layout)).join('')}
-          </select>
-        </label>
-        <label class="field">
-          <span>모바일 이미지 경로</span>
-          <input data-key="mobileSrc" value="${escapeAttr(block.mobileSrc)}" placeholder="title-img-f에서 사용">
-        </label>
-        <label class="field">
-          <span>캡션</span>
-          <input data-key="caption" value="${escapeAttr(block.caption)}">
-        </label>
-        <div class="image-actions">
-          <label class="upload-button">
-            ${iconHtml('upload')}업로드
-            <input class="sr-only" type="file" accept="image/*" data-upload-target="image">
+    const showMobileImage = block.layout === 'title-img-f';
+    return `<div class="media-editor">
+      <div class="image-grid">
+        ${uploadTileHtml({ src: block.src, target: 'image', label: 'PC 이미지 업로드' })}
+        <div class="media-fields">
+          <label class="field">
+            <span>PC 이미지 경로</span>
+            <input data-key="src" value="${escapeAttr(block.src)}">
           </label>
-          <button type="button" data-block-action="autoImagePath">${iconHtml('route')}자동 경로</button>
+          <div class="field-row">
+            <label class="field">
+              <span>레이아웃</span>
+              <select data-key="layout">
+                ${IMAGE_LAYOUTS.map(value => optionHtml(value, block.layout)).join('')}
+              </select>
+            </label>
+            <button class="ui-button ui-button--secondary field-button" type="button" data-block-action="autoImagePath">${iconHtml('route')}자동 경로</button>
+          </div>
         </div>
       </div>
+      ${showMobileImage ? `<div class="image-grid">
+        ${uploadTileHtml({ src: block.mobileSrc || block.src, target: 'imageMobile', label: '모바일 이미지 업로드' })}
+        <div class="media-fields">
+          <label class="field">
+            <span>모바일 이미지 경로</span>
+            <input data-key="mobileSrc" value="${escapeAttr(block.mobileSrc)}" placeholder="비워두면 PC 이미지 사용">
+          </label>
+          <button class="ui-button ui-button--secondary field-button" type="button" data-block-action="autoMobileImagePath">${iconHtml('route')}모바일 자동 경로</button>
+        </div>
+      </div>` : ''}
+      ${captionEditorHtml(block.caption, { label: '이미지 캡션' })}
     </div>`;
   }
 
@@ -363,32 +396,19 @@ function blockFieldsHtml(block) {
         </select>
       </label>
       ${items.map((item, index) => {
-        const imageUrl = normalizeImageUrl(item.src);
         return `<div class="duo-editor__item" data-duo-index="${index}">
-          <div class="image-thumb"><img src="${escapeAttr(imageUrl)}" alt="" onerror="this.hidden=true"></div>
+          ${uploadTileHtml({ src: item.src, target: 'duo', label: `이미지 ${index + 1} 업로드`, attrs: `data-duo-index="${index}"` })}
           <div class="duo-editor__fields">
             <label class="field">
-              <span>이미지 ${index + 1} 경로 또는 URL</span>
+              <span>이미지 ${index + 1} 경로</span>
               <input data-key="duoItem" data-duo-key="src" data-duo-index="${index}" value="${escapeAttr(item.src)}">
             </label>
-            <label class="field">
-              <span>이미지 ${index + 1} 캡션</span>
-              <input data-key="duoItem" data-duo-key="caption" data-duo-index="${index}" value="${escapeAttr(item.caption)}">
-            </label>
-            <div class="image-actions">
-              <label class="upload-button">
-                ${iconHtml('upload')}업로드
-                <input class="sr-only" type="file" accept="image/*" data-upload-target="duo" data-duo-index="${index}">
-              </label>
-              <button type="button" data-duo-action="autoPath" data-duo-index="${index}">${iconHtml('route')}자동 경로</button>
-            </div>
+            <button class="ui-button ui-button--secondary field-button" type="button" data-duo-action="autoPath" data-duo-index="${index}">${iconHtml('route')}자동 경로</button>
+            ${captionEditorHtml(item.caption, { key: 'duoCaptionRich', label: `이미지 ${index + 1} 캡션`, attrs: `data-duo-index="${index}"` })}
           </div>
         </div>`;
       }).join('')}
-      <label class="field">
-        <span>공통 캡션</span>
-        <input data-key="caption" value="${escapeAttr(block.caption)}" placeholder="title-img-duo에서 사용">
-      </label>
+      ${block.layout === 'title-img-duo' ? captionEditorHtml(block.caption, { label: '타이틀 듀오 전체 캡션' }) : ''}
     </div>`;
   }
 
@@ -400,59 +420,48 @@ function blockFieldsHtml(block) {
         <button type="button" data-slide-action="add">${iconHtml('plus')}이미지 추가</button>
       </div>
       ${block.images.map((src, index) => {
-        const imageUrl = normalizeImageUrl(src);
         return `<div class="slide-editor__item" data-slide-index="${index}">
-          <div class="image-thumb"><img src="${escapeAttr(imageUrl)}" alt="" onerror="this.hidden=true"></div>
+          ${uploadTileHtml({ src, target: 'slide', label: `슬라이드 ${index + 1} 업로드`, attrs: `data-slide-index="${index}"` })}
           <div class="slide-editor__fields">
             <label class="field">
-              <span>이미지 ${index + 1} 경로 또는 URL</span>
+              <span>슬라이드 ${index + 1} 경로</span>
               <input data-key="slideImage" data-slide-index="${index}" value="${escapeAttr(src)}">
             </label>
             <div class="image-actions">
-              <label class="upload-button">
-                ${iconHtml('upload')}업로드
-                <input class="sr-only" type="file" accept="image/*" data-upload-target="slide" data-slide-index="${index}">
-              </label>
               <button type="button" data-slide-action="autoPath" data-slide-index="${index}">${iconHtml('route')}자동 경로</button>
               <button type="button" data-slide-action="remove" data-slide-index="${index}" aria-label="슬라이드 이미지 삭제">${iconHtml('trash-2')}삭제</button>
             </div>
           </div>
         </div>`;
       }).join('')}
-      <label class="field">
-        <span>공통 캡션</span>
-        <input data-key="caption" value="${escapeAttr(block.caption)}">
-      </label>
+      ${captionEditorHtml(block.caption, { label: '슬라이드 공통 캡션' })}
     </div>`;
   }
 
   if (block.type === 'video') {
     return `<label class="field">
-      <span>Video type</span>
+      <span>영상 유형</span>
       <select data-key="videoType">
-        ${optionHtml('video-yt', block.videoType || 'video-yt')}
-        ${optionHtml('video-mp4', block.videoType || 'video-yt')}
+        ${optionHtml('video-yt', block.videoType || 'video-yt', '유튜브')}
+        ${optionHtml('video-mp4', block.videoType || 'video-yt', 'MP4 파일')}
       </select>
     </label>
     <label class="field">
-      <span>YouTube or MP4 URL</span>
+      <span>유튜브 또는 MP4 URL</span>
       <input data-key="url" value="${escapeAttr(block.url)}">
     </label>
-    <label class="field">
-      <span>Caption</span>
-      <input data-key="caption" value="${escapeAttr(block.caption)}">
-    </label>`;
+    ${captionEditorHtml(block.caption, { label: '영상 캡션' })}`;
   }
 
   if (block.type === 'credit') {
     return `<label class="field">
-      <span>Rows, one per line. Use label: name</span>
+      <span>크레딧. 한 줄에 하나씩, 이름: 내용 형식</span>
       <textarea data-key="rows">${escapeHtml((block.rows || []).join('\n'))}</textarea>
     </label>`;
   }
 
   return `<label class="field">
-    <span>${block.type === 'quote' ? 'Quote' : 'Text'}</span>
+    <span>${block.type === 'quote' ? '인용문' : '텍스트'}</span>
     <textarea data-key="text">${escapeHtml(block.text)}</textarea>
   </label>`;
 }
@@ -477,6 +486,14 @@ function bindEvents() {
       const inlineAdd = inlineAddButton.closest('[data-insert-after]');
       const afterIndex = Number(inlineAdd?.dataset.insertAfter);
       addBlock(inlineAddButton.dataset.addInline, Number.isFinite(afterIndex) ? afterIndex + 1 : state.blocks.length);
+      return;
+    }
+
+    const captionButton = event.target.closest('[data-caption-rich-action]');
+    if (captionButton) {
+      const card = captionButton.closest('.block-card');
+      if (!card) return;
+      handleCaptionRichAction(card.dataset.id, captionButton.dataset.captionRichAction, captionButton);
       return;
     }
 
@@ -558,6 +575,12 @@ function bindEvents() {
       if (block.items[index] && ['src', 'caption'].includes(duoKey)) {
         block.items[index][duoKey] = event.target.value;
       }
+    } else if (key === 'captionRich') {
+      block.caption = sanitizeRichHtml(event.target.innerHTML);
+    } else if (key === 'duoCaptionRich') {
+      const index = Number(event.target.dataset.duoIndex);
+      block.items = normalizeDuoItems(block.items);
+      if (block.items[index]) block.items[index].caption = sanitizeRichHtml(event.target.innerHTML);
     } else if (key === 'slideImage') {
       const index = Number(event.target.dataset.slideIndex);
       block.images = normalizeSlideImages(block.images);
@@ -579,12 +602,17 @@ function bindEvents() {
 
   els.blockList.addEventListener('change', event => {
     const uploadInput = event.target.closest('[data-upload-target]');
-    if (!uploadInput) return;
-    handleImageUpload(uploadInput);
+    if (uploadInput) {
+      handleImageUpload(uploadInput);
+      return;
+    }
+    if (event.target.dataset.key) {
+      event.target.dispatchEvent(new Event('input', { bubbles: true }));
+    }
   });
 
   els.blockList.addEventListener('mouseover', event => {
-    const link = event.target.closest('.rich-editor a[data-link-type]');
+    const link = event.target.closest('.rich-editor a[data-link-type], .rich-caption-editor a[data-link-type]');
     if (!link) return;
     showLinkPopover(link);
   });
@@ -598,7 +626,7 @@ function bindEvents() {
       if (editorAction === 'cancel') hideLinkPopover();
       return;
     }
-    if (!event.target.closest('.rich-editor a[data-link-type]')) hideLinkPopover();
+    if (!event.target.closest('.rich-editor a[data-link-type], .rich-caption-editor a[data-link-type]')) hideLinkPopover();
   });
 
   document.addEventListener('submit', event => {
@@ -613,7 +641,7 @@ function bindEvents() {
   });
 
   els.blockList.addEventListener('paste', event => {
-    const editor = event.target.closest('.rich-editor');
+    const editor = event.target.closest('.rich-editor, .rich-caption-editor');
     if (!editor) return;
     event.preventDefault();
     const text = event.clipboardData?.getData('text/plain') || '';
@@ -658,6 +686,8 @@ function bindEvents() {
     });
   });
   els.loadArticles.addEventListener('click', loadArticlesFromNotion);
+  els.toggleMeta.addEventListener('click', () => setMetaOpen(els.metaDrawer.classList.contains('is-collapsed')));
+  els.closeMeta.addEventListener('click', () => setMetaOpen(false));
   els.minimizeComposer.addEventListener('click', () => document.body.classList.toggle('composer-minimized'));
   els.publishPrev.addEventListener('click', () => shiftPublishDate(-1));
   els.publishNext.addEventListener('click', () => shiftPublishDate(1));
@@ -673,12 +703,21 @@ function bindEvents() {
     if (event.key === 'Escape' && !els.cafeExportPanel.classList.contains('is-collapsed')) {
       setExportOpen(false);
     }
+    if (event.key === 'Escape' && !els.metaDrawer.classList.contains('is-collapsed')) {
+      setMetaOpen(false);
+    }
   });
 
   document.addEventListener('click', event => {
     if (!document.body.classList.contains('export-open')) return;
     if (event.target.closest('#cafeExportPanel') || event.target.closest('#toggleExport')) return;
     setExportOpen(false);
+  });
+
+  document.addEventListener('click', event => {
+    if (els.metaDrawer.classList.contains('is-collapsed')) return;
+    if (event.target.closest('#metaDrawer') || event.target.closest('#toggleMeta')) return;
+    setMetaOpen(false);
   });
 
   els.articleList.addEventListener('click', event => {
@@ -692,7 +731,10 @@ function bindEvents() {
   els.previewFrame.addEventListener('load', () => {
     state.previewReady = true;
     updatePreview();
+    fitPreviewFrame();
   });
+
+  window.addEventListener('resize', fitPreviewFrame);
 
   window.addEventListener('message', event => {
     if (event.data && event.data.type === 'ANU_ARTICLE_PREVIEW_READY') {
@@ -746,6 +788,18 @@ function setExportOpen(open) {
     if (firstInput) firstInput.focus({ preventScroll: true });
   } else {
     els.toggleExport.focus({ preventScroll: true });
+  }
+}
+
+function setMetaOpen(open) {
+  els.metaDrawer.classList.toggle('is-collapsed', !open);
+  document.body.classList.toggle('meta-open', open);
+  els.toggleMeta.setAttribute('aria-expanded', String(open));
+  if (open) {
+    const firstInput = els.metaDrawer.querySelector('select, input, textarea, button');
+    if (firstInput) firstInput.focus({ preventScroll: true });
+  } else {
+    els.toggleMeta.focus({ preventScroll: true });
   }
 }
 
@@ -809,6 +863,9 @@ function handleBlockAction(blockId, action) {
   } else if (action === 'autoImagePath' && state.blocks[index].type === 'image') {
     ensureArticleCodeForAssets();
     state.blocks[index].src = buildArticleAssetPath(imageSlotName(state.blocks[index]), state.blocks[index].src || 'image.jpg');
+  } else if (action === 'autoMobileImagePath' && state.blocks[index].type === 'image') {
+    ensureArticleCodeForAssets();
+    state.blocks[index].mobileSrc = buildArticleAssetPath(`${imageSlotName(state.blocks[index])}-mobile`, state.blocks[index].mobileSrc || state.blocks[index].src || 'image.jpg');
   }
 
   renderBlockList();
@@ -829,6 +886,30 @@ function handleDuoAction(blockId, action, itemIndex) {
   renderBlockList();
   updatePreview();
   markSaved('Editing');
+}
+
+function handleCaptionRichAction(blockId, action, button) {
+  const editor = button.closest('.caption-editor')?.querySelector('.rich-caption-editor');
+  const block = state.blocks.find(item => item.id === blockId);
+  if (!editor || !block) return;
+
+  editor.focus();
+  if (action === 'bold') {
+    document.execCommand('bold', false);
+  } else if (action === 'underline') {
+    document.execCommand('underline', false);
+  } else if (action === 'externalLink') {
+    showLinkEditor({ editor, type: 'external', range: captureEditorRange(editor) });
+    return;
+  } else if (action === 'productLink') {
+    showLinkEditor({ editor, type: 'product', range: captureEditorRange(editor) });
+    return;
+  } else if (action === 'popupLink') {
+    showLinkEditor({ editor, type: 'popup', range: captureEditorRange(editor) });
+    return;
+  }
+
+  syncCaptionEditor(editor);
 }
 
 function handleSlideAction(blockId, action, imageIndex) {
@@ -874,7 +955,9 @@ async function handleImageUpload(input) {
     ? `duo-${duoIndex + 1}`
     : uploadTarget === 'slide'
       ? `slide-${slideIndex + 1}`
-      : imageSlotName(block);
+      : uploadTarget === 'imageMobile'
+        ? `${imageSlotName(block)}-mobile`
+        : imageSlotName(block);
   const assetPath = buildArticleAssetPath(slot, file.name);
 
   try {
@@ -888,6 +971,8 @@ async function handleImageUpload(input) {
     } else if (uploadTarget === 'slide') {
       block.images = normalizeSlideImages(block.images);
       if (block.images[slideIndex] !== undefined) block.images[slideIndex] = savedPath;
+    } else if (uploadTarget === 'imageMobile') {
+      block.mobileSrc = savedPath;
     } else {
       block.src = savedPath;
     }
@@ -994,7 +1079,7 @@ function showLinkPopover(link) {
   popover.className = 'link-popover';
   popover.innerHTML = compactLinkPopoverHtml();
   const rect = link.getBoundingClientRect();
-  const label = link.dataset.linkType === 'product' ? 'Product link' : link.dataset.linkType === 'popup' ? 'Popup link' : 'External link';
+  const label = link.dataset.linkType === 'product' ? '상품 링크' : link.dataset.linkType === 'popup' ? '팝업 링크' : '외부 링크';
   popover.querySelector('[data-link-popover-label]').textContent = label;
   popover.style.left = `${Math.min(window.innerWidth - 220, Math.max(12, rect.left))}px`;
   popover.style.top = `${Math.max(12, rect.top - 42)}px`;
@@ -1020,19 +1105,19 @@ function getLinkPopover() {
 }
 
 function compactLinkPopoverHtml() {
-  return `<span data-link-popover-label>Link</span>
-    <button type="button" data-link-popover-action="edit">Edit</button>
-    <button type="button" data-link-popover-action="open">Open</button>
-    <button type="button" data-link-popover-action="remove">Remove</button>`;
+  return `<span data-link-popover-label>링크</span>
+    <button type="button" data-link-popover-action="edit">수정</button>
+    <button type="button" data-link-popover-action="open">열기</button>
+    <button type="button" data-link-popover-action="remove">해제</button>`;
 }
 
 function handleLinkPopoverAction(action) {
   if (!activeRichLink) return;
   const link = activeRichLink;
-  const card = link.closest('.block-card');
+  const editor = link.closest('.rich-editor, .rich-caption-editor');
   if (action === 'edit') {
     showLinkEditor({
-      editor: card?.querySelector('.rich-editor'),
+      editor,
       link,
       type: link.dataset.linkType || 'external',
     });
@@ -1044,12 +1129,12 @@ function handleLinkPopoverAction(action) {
     unwrapElement(link);
   }
 
-  syncRichEditorCard(card);
+  syncRichEditorElement(editor);
   hideLinkPopover();
 }
 
 function showLinkEditor({ editor, link = null, type = 'external', range = null }) {
-  if (!editor && link) editor = link.closest('.block-card')?.querySelector('.rich-editor');
+  if (!editor && link) editor = link.closest('.rich-editor, .rich-caption-editor');
   if (!editor) return;
 
   const popover = getLinkPopover();
@@ -1096,32 +1181,32 @@ function linkValuesFromElement(link) {
 function linkEditorHtml(values) {
   return `<form class="link-editor-form" data-link-editor-form>
     <label>
-      <span>Type</span>
+      <span>링크 유형</span>
       <select data-link-field="type">
-        <option value="external"${values.type === 'external' ? ' selected' : ''}>External</option>
-        <option value="product"${values.type === 'product' ? ' selected' : ''}>Product</option>
-        <option value="popup"${values.type === 'popup' ? ' selected' : ''}>Popup</option>
+        <option value="external"${values.type === 'external' ? ' selected' : ''}>외부 링크</option>
+        <option value="product"${values.type === 'product' ? ' selected' : ''}>상품 링크</option>
+        <option value="popup"${values.type === 'popup' ? ' selected' : ''}>팝업 링크</option>
       </select>
     </label>
     <label>
-      <span>Label</span>
-      <input data-link-field="text" value="${escapeAttr(values.text || '')}" placeholder="Displayed text">
+      <span>표시 문구</span>
+      <input data-link-field="text" value="${escapeAttr(values.text || '')}" placeholder="화면에 보일 문구">
     </label>
     <label data-link-field-wrap="url">
       <span>URL</span>
       <input data-link-field="url" value="${escapeAttr(values.url || '')}" placeholder="https://">
     </label>
     <label data-link-field-wrap="popup">
-      <span>Popup title</span>
-      <input data-link-field="popupTitle" value="${escapeAttr(values.popupTitle || '')}" placeholder="Title">
+      <span>팝업 제목</span>
+      <input data-link-field="popupTitle" value="${escapeAttr(values.popupTitle || '')}" placeholder="제목">
     </label>
     <label data-link-field-wrap="popup">
-      <span>Popup text</span>
-      <textarea data-link-field="popupContent" rows="3" placeholder="Popup content">${escapeHtml(values.popupContent || '')}</textarea>
+      <span>팝업 내용</span>
+      <textarea data-link-field="popupContent" rows="3" placeholder="팝업에 들어갈 내용">${escapeHtml(values.popupContent || '')}</textarea>
     </label>
     <div class="link-editor-form__actions">
-      <button type="button" data-link-editor-action="cancel">Cancel</button>
-      <button type="submit">Apply</button>
+      <button type="button" data-link-editor-action="cancel">취소</button>
+      <button type="submit">적용</button>
     </div>
   </form>`;
 }
@@ -1166,10 +1251,10 @@ function applyLinkEditor() {
 
   if (activeLinkEditor.link) {
     applyAttributesToLink(activeLinkEditor.link, attributes, text || fallbackLabel);
-    syncRichLinkBlock(activeLinkEditor.link);
+    syncRichEditorElement(activeLinkEditor.link.closest('.rich-editor, .rich-caption-editor'));
   } else {
     insertInlineLink(activeLinkEditor.editor, attributes, text || fallbackLabel, activeLinkEditor.range);
-    syncRichEditorCard(activeLinkEditor.editor.closest('.block-card'));
+    syncRichEditorElement(activeLinkEditor.editor);
   }
 
   hideLinkPopover();
@@ -1217,8 +1302,32 @@ function applyAttributesToLink(link, attributes, label) {
 }
 
 function syncRichLinkBlock(link) {
-  const card = link.closest?.('.block-card');
-  syncRichEditorCard(card);
+  syncRichEditorElement(link.closest?.('.rich-editor, .rich-caption-editor'));
+}
+
+function syncRichEditorElement(editor) {
+  if (!editor) return;
+  if (editor.classList.contains('rich-caption-editor')) {
+    syncCaptionEditor(editor);
+    return;
+  }
+  syncRichEditorCard(editor.closest('.block-card'));
+}
+
+function syncCaptionEditor(editor) {
+  const card = editor.closest('.block-card');
+  const block = state.blocks.find(item => item.id === card?.dataset.id);
+  if (!editor || !block) return;
+  const key = editor.dataset.key;
+  if (key === 'duoCaptionRich') {
+    const index = Number(editor.dataset.duoIndex);
+    block.items = normalizeDuoItems(block.items);
+    if (block.items[index]) block.items[index].caption = sanitizeRichHtml(editor.innerHTML);
+  } else {
+    block.caption = sanitizeRichHtml(editor.innerHTML);
+  }
+  updatePreview();
+  markSaved('Editing');
 }
 
 function syncRichEditorCard(card) {
@@ -1505,13 +1614,13 @@ function updatePreview() {
 
 function renderArticleList() {
   if (!state.articles.length) {
-    els.articleList.innerHTML = '<p class="empty-state">Load Notion to browse articles.</p>';
+    els.articleList.innerHTML = '<p class="empty-state">불러오기를 눌러 노션 아티클을 가져오세요.</p>';
     return;
   }
 
   const filteredArticles = getFilteredArticles();
   if (!filteredArticles.length) {
-    els.articleList.innerHTML = '<p class="empty-state">No articles match this filter.</p>';
+    els.articleList.innerHTML = '<p class="empty-state">현재 필터에 맞는 아티클이 없습니다.</p>';
     return;
   }
 
@@ -1598,7 +1707,21 @@ function setViewport(width) {
   state.viewportWidth = Number(width);
   els.viewportRange.value = state.viewportWidth;
   els.viewportLabel.textContent = `${state.viewportWidth}px`;
-  els.deviceFrame.style.width = `${state.viewportWidth}px`;
+  fitPreviewFrame();
+}
+
+function fitPreviewFrame() {
+  const stage = els.deviceFrame.parentElement;
+  if (!stage) return;
+  const availableWidth = Math.max(320, stage.clientWidth - 48);
+  const scale = Math.min(1, availableWidth / state.viewportWidth);
+  const iframeHeight = Math.max(640, window.innerHeight - 210);
+  els.deviceFrame.style.width = `${Math.round(state.viewportWidth * scale)}px`;
+  els.deviceFrame.style.height = `${Math.round(iframeHeight * scale)}px`;
+  els.previewFrame.style.width = `${state.viewportWidth}px`;
+  els.previewFrame.style.height = `${iframeHeight}px`;
+  els.previewFrame.style.transform = `scale(${scale})`;
+  els.previewFrame.style.transformOrigin = 'top left';
 }
 
 function markSelected(blockId) {
@@ -1712,8 +1835,8 @@ function scheduleDraftAutosave() {
   window.clearTimeout(draftAutosaveTimer);
   draftAutosaveTimer = window.setTimeout(() => {
     persistDraft();
-    if (els.saveState.textContent === 'Editing') {
-      els.saveState.textContent = 'Autosaved';
+    if (els.saveState.textContent === '편집 중') {
+      els.saveState.textContent = '자동 저장됨';
     }
   }, 900);
 }
@@ -1887,7 +2010,7 @@ function getPipelineEndpoint() {
 }
 
 function markGasState(label) {
-  els.gasState.textContent = label;
+  els.gasState.textContent = statusLabel(label);
 }
 
 function downloadText(text, filename, mimeType) {
@@ -1903,12 +2026,42 @@ function downloadText(text, filename, mimeType) {
 }
 
 function markSaved(label) {
-  els.saveState.textContent = label;
+  els.saveState.textContent = statusLabel(label);
   if (label === 'Editing') scheduleDraftAutosave();
   window.clearTimeout(markSaved.timer);
   markSaved.timer = window.setTimeout(() => {
-    els.saveState.textContent = 'Saved';
+    els.saveState.textContent = '저장됨';
   }, 1400);
+}
+
+function statusLabel(label) {
+  const labels = {
+    'Add GAS URL': 'GAS URL 필요',
+    'Autosaved': '자동 저장됨',
+    'Code ready': '코드 준비됨',
+    'Copy failed': '복사 실패',
+    'Done': '완료',
+    'Editing': '편집 중',
+    'Failed': '실패',
+    'HTML copied': 'HTML 복사됨',
+    'Imported': '가져오기 완료',
+    'Import failed': '가져오기 실패',
+    'Invalid URL': 'URL 확인 필요',
+    'JSON copied': 'JSON 복사됨',
+    'Keep one block': '블록은 1개 이상 필요',
+    'Keep one image': '이미지는 1개 이상 필요',
+    'Loaded': '불러옴',
+    'Load failed': '불러오기 실패',
+    'Loading': '불러오는 중',
+    'Ready': '준비됨',
+    'Running': '실행 중',
+    'Saved': '저장됨',
+    'Saved local': '로컬 저장됨',
+    'Uploaded': '업로드됨',
+    'Uploading': '업로드 중',
+    'Upload failed': '업로드 실패',
+  };
+  return labels[label] || label;
 }
 
 function videoEmbedHtml(url) {
@@ -1995,8 +2148,9 @@ function slugArticleCode(code) {
 }
 
 function captionHtml(caption, className = '') {
-  return caption ? `
-    <p class="arti-caption${className ? ` ${escapeAttr(className)}` : ''}">${escapeHtml(caption)}</p>` : '';
+  const html = richHtmlToArticleInlineHtml(caption);
+  return html ? `
+    <p class="arti-caption${className ? ` ${escapeAttr(className)}` : ''}">${html}</p>` : '';
 }
 
 function sanitizeRichHtml(value) {
@@ -2122,9 +2276,9 @@ function lineBreaks(value) {
   return escapeHtml(value).replace(/\n{2,}/g, '</p><p class="basic-p">').replace(/\n/g, '<br>');
 }
 
-function optionHtml(value, selectedValue) {
+function optionHtml(value, selectedValue, label = value) {
   const selected = value === selectedValue ? ' selected' : '';
-  return `<option value="${escapeAttr(value)}"${selected}>${escapeHtml(value)}</option>`;
+  return `<option value="${escapeAttr(value)}"${selected}>${escapeHtml(label)}</option>`;
 }
 
 function iconHtml(name) {

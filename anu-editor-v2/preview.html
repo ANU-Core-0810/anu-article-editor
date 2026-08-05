@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ANU Article Preview</title>
+  <title>ANU 아티클 미리보기</title>
   <link rel="stylesheet" href="./site-assets/layout.css">
   <link rel="stylesheet" href="./site-assets/style.css">
   <link rel="stylesheet" href="./site-assets/read-new.css">
@@ -165,7 +165,7 @@
   <main class="preview-shell">
     <section class="preview-hero">
       <div>
-        <p id="previewCategory" class="preview-kicker">Craft · Guide</p>
+        <p id="previewCategory" class="preview-kicker">크래프트 · 가이드</p>
         <h1 id="previewTitle" class="preview-title">What Makes a Good Bowl<span>손의 경험 | 좋은 보울을 만드는 요소</span></h1>
       </div>
       <p id="previewDeck" class="preview-deck">손의 촉감, 무게감, 곡선이 좋은 보울을 완성하는 방식을 살펴봅니다.</p>
@@ -188,10 +188,10 @@
 
     function renderArticle(payload) {
       const meta = payload.meta || {};
-      const englishTitle = meta.englishTitle || 'Untitled Article';
+      const englishTitle = meta.englishTitle || '제목 없음';
       const koreanTitle = meta.koreanTitle || '';
       titleEl.innerHTML = escapeHtml(englishTitle) + (koreanTitle ? '<span>' + escapeHtml(koreanTitle) + '</span>' : '');
-      categoryEl.textContent = meta.category || meta.code || 'Article';
+      categoryEl.textContent = [displayCategory(meta.category), displayType(meta.type)].filter(Boolean).join(' · ') || meta.code || '아티클';
       deckEl.textContent = meta.deck || '';
       bodyEl.innerHTML = payload.html || '<div class="arti-body"></div>';
       bodyEl.querySelectorAll('[data-reveal]').forEach(element => {
@@ -206,10 +206,31 @@
         img.addEventListener('error', () => {
           const placeholder = document.createElement('div');
           placeholder.className = 'preview-image-placeholder';
-          placeholder.textContent = 'Image preview unavailable';
+          placeholder.textContent = '이미지 미리보기를 불러올 수 없습니다';
           img.replaceWith(placeholder);
         }, { once: true });
       });
+    }
+
+    function displayCategory(value) {
+      const labels = {
+        life: '라이프',
+        craft: '크래프트',
+        sustainability: '지속가능성',
+        archive: '아카이브',
+      };
+      return labels[value] || value || '';
+    }
+
+    function displayType(value) {
+      const labels = {
+        essay: '에세이',
+        interview: '인터뷰',
+        curation: '큐레이션',
+        guide: '가이드',
+        project: '프로젝트',
+      };
+      return labels[value] || value || '';
     }
 
     window.addEventListener('message', event => {

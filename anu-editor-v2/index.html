@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ANU Article Studio</title>
+  <title>ANU 아티클 스튜디오</title>
   <script>
     window.tailwind = window.tailwind || {};
     window.tailwind.config = {
@@ -46,31 +46,31 @@
 </head>
 <body class="bg-background text-foreground font-sans antialiased">
   <main class="app-shell min-h-screen">
-    <aside class="sidebar" aria-label="Article navigation">
+    <aside class="sidebar" aria-label="아티클 목록">
       <header class="sidebar__head">
         <div class="brand">
           <span class="brand__mark" aria-hidden="true">A</span>
           <div>
-            <strong>Article Studio</strong>
-            <span>Notion articles</span>
+            <strong>아티클 스튜디오</strong>
+            <span>노션 아티클</span>
           </div>
         </div>
       </header>
 
       <label class="search-field">
-        <span class="sr-only">Search articles</span>
+        <span class="sr-only">아티클 검색</span>
         <i data-lucide="search" aria-hidden="true"></i>
-        <input id="articleSearch" type="search" placeholder="Search title or code">
+        <input id="articleSearch" type="search" placeholder="제목 또는 코드 검색">
       </label>
 
-      <div class="status-filter" role="group" aria-label="Filter articles by status">
-        <button class="is-active" type="button" data-status-filter="all">All</button>
+      <div class="status-filter" role="group" aria-label="상태별 아티클 필터">
+        <button class="is-active" type="button" data-status-filter="all">전체</button>
         <button type="button" data-status-filter="등록 중">등록 중</button>
         <button type="button" data-status-filter="업데이트">업데이트</button>
         <button type="button" data-status-filter="업로드">업로드</button>
       </div>
 
-      <nav class="article-list" aria-label="Articles">
+      <nav class="article-list" aria-label="아티클">
         <button class="article-row is-active" type="button">
           <span>ARTI26-001</span>
           <strong>손의 경험 | 좋은 보울을 만드는 요소</strong>
@@ -84,19 +84,19 @@
       </nav>
     </aside>
 
-    <section class="editor" aria-label="Article editor">
+    <section class="editor" aria-label="아티클 편집기">
       <header class="topbar">
         <div class="title-fields">
           <div class="title-meta">
-            <span id="saveState" class="save-state">Saved</span>
-            <span>ANU Article Editor</span>
+            <span id="saveState" class="save-state">저장됨</span>
+            <span>아티클 편집기</span>
           </div>
-          <input id="englishTitle" class="title-input" value="What Makes a Good Bowl" aria-label="English title">
-          <input id="koreanTitle" class="subtitle-input" value="손의 경험 | 좋은 보울을 만드는 요소" aria-label="Korean title">
+          <input id="englishTitle" class="title-input" value="What Makes a Good Bowl" aria-label="영문 제목">
+          <input id="koreanTitle" class="subtitle-input" value="손의 경험 | 좋은 보울을 만드는 요소" aria-label="한글 제목">
         </div>
 
         <div class="topbar__actions">
-          <button class="ui-button ui-button--ghost" type="button" id="toggleSidebar" aria-label="Toggle article list">
+          <button class="ui-button ui-button--ghost" type="button" id="toggleSidebar" aria-label="아티클 목록 열고 닫기">
             <i data-lucide="panel-left" aria-hidden="true"></i>
             <span>목록</span>
           </button>
@@ -104,12 +104,16 @@
             <i data-lucide="refresh-cw" aria-hidden="true"></i>
             <span>불러오기</span>
           </button>
+          <button class="ui-button ui-button--secondary" type="button" id="toggleMeta" aria-expanded="false">
+            <i data-lucide="sliders-horizontal" aria-hidden="true"></i>
+            <span>문서 설정</span>
+          </button>
           <button class="ui-button ui-button--secondary" type="button" id="toggleExport">
             <i data-lucide="file-down" aria-hidden="true"></i>
             <span>Cafe24</span>
           </button>
           <details class="utility-menu">
-            <summary class="ui-button ui-button--ghost" aria-label="More actions">
+            <summary class="ui-button ui-button--ghost" aria-label="추가 작업">
               <i data-lucide="more-horizontal" aria-hidden="true"></i>
               <span>더보기</span>
             </summary>
@@ -128,123 +132,139 @@
         </div>
       </header>
 
-      <div class="workarea">
-        <section class="composer" aria-label="Composer">
-          <div class="composer__floatbar">
-            <span>Editing panel</span>
-            <button class="ui-button ui-button--ghost" type="button" id="minimizeComposer">
-              <i data-lucide="minus" aria-hidden="true"></i>
-              Minimize
+      <section class="meta-drawer is-collapsed" id="metaDrawer" aria-label="문서 설정">
+        <div class="meta-drawer__head">
+          <div>
+            <p class="panel-eyebrow">문서 설정</p>
+            <h2>아티클 정보</h2>
+          </div>
+          <button class="ui-button ui-button--ghost" type="button" id="closeMeta" aria-label="문서 설정 닫기">
+            <i data-lucide="x" aria-hidden="true"></i>
+          </button>
+        </div>
+        <div class="meta-grid">
+          <label class="field">
+            <span>상태</span>
+            <select id="articleStatus">
+              <option>시작 전</option>
+              <option>작성 중</option>
+              <option selected>등록 중</option>
+              <option>업데이트</option>
+              <option>업로드</option>
+            </select>
+          </label>
+          <div class="field field--with-action">
+            <label>
+              <span>아티클 코드</span>
+              <input id="articleCode" value="ARTI26-001">
+            </label>
+            <button class="ui-button ui-button--secondary" type="button" id="generateArticleCode">
+              <i data-lucide="hash" aria-hidden="true"></i>
+              생성
             </button>
           </div>
+          <label class="field">
+            <span>카테고리</span>
+            <select id="articleCategory">
+              <option value="life">라이프</option>
+              <option value="craft" selected>크래프트</option>
+              <option value="sustainability">지속가능성</option>
+              <option value="archive">아카이브</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>유형</span>
+            <select id="articleType">
+              <option value="essay">에세이</option>
+              <option value="interview">인터뷰</option>
+              <option value="curation">큐레이션</option>
+              <option value="guide" selected>가이드</option>
+              <option value="project">프로젝트</option>
+            </select>
+          </label>
+          <div class="field">
+            <span>발행일</span>
+            <div class="date-control">
+              <input id="publishDate" type="date" aria-label="발행일">
+              <button type="button" id="publishPrev" aria-label="이전 날짜">
+                <i data-lucide="chevron-left" aria-hidden="true"></i>
+              </button>
+              <button type="button" id="publishNext" aria-label="다음 날짜">
+                <i data-lucide="chevron-right" aria-hidden="true"></i>
+              </button>
+              <button type="button" id="publishToday">오늘</button>
+              <button type="button" id="publishClear" aria-label="발행일 비우기">
+                <i data-lucide="x" aria-hidden="true"></i>
+              </button>
+            </div>
+            <small id="publishDateLabel" class="date-label">날짜 없음</small>
+          </div>
+          <label class="field">
+            <span>카페24 상품번호</span>
+            <input id="cafe24ProductNo" inputmode="numeric">
+          </label>
+          <label class="field">
+            <span>카페24 상품코드</span>
+            <input id="cafe24ProductCode">
+          </label>
+          <label class="field">
+            <span>상품분류 번호</span>
+            <input id="productCategoryIds" value="114|117">
+          </label>
+          <label class="field field--wide">
+            <span>요약문</span>
+            <textarea id="articleDeck">손의 촉감, 무게감, 곡선이 좋은 보울을 완성하는 방식을 살펴봅니다.</textarea>
+          </label>
+          <label class="field field--wide">
+            <span>노션 편집기 페이지 ID</span>
+            <input id="editorPageId" placeholder="아티클 편집기 page_id">
+          </label>
+          <label class="field field--wide">
+            <span>노션 아티클 페이지 ID</span>
+            <input id="articlePageId" placeholder="아티클 DB page_id">
+          </label>
+        </div>
+      </section>
 
-          <section class="panel meta-panel">
-            <div class="panel__head">
-              <div>
-                <p class="panel-eyebrow">Article</p>
-                <h2>아티클 정보</h2>
-              </div>
-              <button class="ui-button ui-button--ghost" type="button" id="toggleComposerFloat">
-                <i data-lucide="panel-right-open" aria-hidden="true"></i>
-                띄우기
-              </button>
-            </div>
-            <div class="meta-grid">
-              <label class="field">
-                <span>상태</span>
-                <select id="articleStatus">
-                  <option>시작 전</option>
-                  <option>작성 중</option>
-                  <option selected>등록 중</option>
-                  <option>업데이트</option>
-                  <option>업로드</option>
-                </select>
-              </label>
-              <label class="field">
-                <span>아티클 코드</span>
-                <input id="articleCode" value="ARTI26-001">
-              </label>
-              <button class="ui-button ui-button--secondary field-button" type="button" id="generateArticleCode">
-                <i data-lucide="hash" aria-hidden="true"></i>
-                생성
-              </button>
-              <label class="field">
-                <span>카테고리</span>
-                <select id="articleCategory">
-                  <option value="life">life</option>
-                  <option value="craft" selected>craft</option>
-                  <option value="sustainability">sustainability</option>
-                  <option value="archive">archive</option>
-                </select>
-              </label>
-              <label class="field">
-                <span>유형</span>
-                <select id="articleType">
-                  <option value="essay">essay</option>
-                  <option value="interview">interview</option>
-                  <option value="curation">curation</option>
-                  <option value="guide" selected>guide</option>
-                  <option value="project">project</option>
-                </select>
-              </label>
-              <div class="field">
-                <span>발행일</span>
-                <div class="date-control">
-                  <button type="button" id="publishPrev" aria-label="이전 날짜">
-                    <i data-lucide="chevron-left" aria-hidden="true"></i>
-                  </button>
-                  <input id="publishDate" type="date" aria-label="발행일">
-                  <button type="button" id="publishNext" aria-label="다음 날짜">
-                    <i data-lucide="chevron-right" aria-hidden="true"></i>
-                  </button>
-                  <button type="button" id="publishToday">오늘</button>
-                  <button type="button" id="publishClear" aria-label="발행일 비우기">
-                    <i data-lucide="x" aria-hidden="true"></i>
-                  </button>
-                </div>
-                <small id="publishDateLabel" class="date-label">날짜 없음</small>
-              </div>
-              <label class="field">
-                <span>카페24 상품번호</span>
-                <input id="cafe24ProductNo" inputmode="numeric">
-              </label>
-              <label class="field">
-                <span>카페24 상품코드</span>
-                <input id="cafe24ProductCode">
-              </label>
-              <label class="field">
-                <span>상품분류 번호</span>
-                <input id="productCategoryIds" value="114|117">
-              </label>
-              <label class="field field--wide">
-                <span>요약문</span>
-                <textarea id="articleDeck">손의 촉감, 무게감, 곡선이 좋은 보울을 완성하는 방식을 살펴봅니다.</textarea>
-              </label>
-            </div>
-          </section>
+      <div class="workarea">
+        <section class="composer" aria-label="본문 편집 패널">
+          <div class="composer__floatbar">
+            <span>편집 패널</span>
+            <button class="ui-button ui-button--ghost" type="button" id="toggleComposerFloat">
+              <i data-lucide="panel-right-open" aria-hidden="true"></i>
+              띄우기
+            </button>
+            <button class="ui-button ui-button--ghost" type="button" id="minimizeComposer">
+              <i data-lucide="minus" aria-hidden="true"></i>
+              접기
+            </button>
+          </div>
 
           <section class="panel">
             <div class="panel__head">
               <div>
-                <p class="panel-eyebrow">Blocks</p>
+                <p class="panel-eyebrow">본문</p>
                 <h2>본문 구성</h2>
               </div>
             </div>
-            <div class="block-tools" aria-label="Add block">
-              <div>
-                <span>Text</span>
-                <button type="button" data-add="text"><i data-lucide="type" aria-hidden="true"></i>텍스트</button>
-                <button type="button" data-add="quote"><i data-lucide="quote" aria-hidden="true"></i>인용</button>
-                <button type="button" data-add="credit"><i data-lucide="badge-info" aria-hidden="true"></i>크레딧</button>
+            <details class="block-tools" aria-label="블록 추가">
+              <summary><i data-lucide="plus" aria-hidden="true"></i>블록 추가</summary>
+              <div class="block-tools__menu">
+                <div>
+                  <span>글</span>
+                  <button type="button" data-add="text"><i data-lucide="type" aria-hidden="true"></i>텍스트</button>
+                  <button type="button" data-add="quote"><i data-lucide="quote" aria-hidden="true"></i>인용</button>
+                  <button type="button" data-add="credit"><i data-lucide="badge-info" aria-hidden="true"></i>크레딧</button>
+                </div>
+                <div>
+                  <span>미디어</span>
+                  <button type="button" data-add="image"><i data-lucide="image" aria-hidden="true"></i>이미지</button>
+                  <button type="button" data-add="duo"><i data-lucide="columns-2" aria-hidden="true"></i>듀오</button>
+                  <button type="button" data-add="slide"><i data-lucide="gallery-horizontal" aria-hidden="true"></i>슬라이드</button>
+                  <button type="button" data-add="video"><i data-lucide="video" aria-hidden="true"></i>비디오</button>
+                </div>
               </div>
-              <div>
-                <span>Media</span>
-                <button type="button" data-add="image"><i data-lucide="image" aria-hidden="true"></i>이미지</button>
-                <button type="button" data-add="duo"><i data-lucide="columns-2" aria-hidden="true"></i>듀오</button>
-                <button type="button" data-add="slide"><i data-lucide="gallery-horizontal" aria-hidden="true"></i>슬라이드</button>
-                <button type="button" data-add="video"><i data-lucide="video" aria-hidden="true"></i>비디오</button>
-              </div>
-            </div>
+            </details>
             <div id="blockList" class="block-list" aria-live="polite"></div>
           </section>
 
@@ -255,28 +275,20 @@
                 <h2>내보내기</h2>
               </div>
               <div class="panel__actions">
-                <span id="gasState" class="panel-state">Ready</span>
-                <button class="ui-button ui-button--ghost" type="button" id="closeExport" aria-label="Close Cafe24 export panel">
+                <span id="gasState" class="panel-state">준비됨</span>
+                <button class="ui-button ui-button--ghost" type="button" id="closeExport" aria-label="카페24 내보내기 닫기">
                   <i data-lucide="x" aria-hidden="true"></i>
                 </button>
               </div>
             </div>
             <div class="pipeline-panel">
               <label class="field field--wide">
-                <span>GAS Web App URL</span>
-                <input id="gasEndpoint" placeholder="Local test URL or blank on Cloudflare Pages">
+                <span>GAS 웹앱 URL</span>
+                <input id="gasEndpoint" placeholder="Cloudflare Pages에서는 비워도 됨">
               </label>
               <label class="field">
-                <span>Access token</span>
-                <input id="gasToken" placeholder="Optional">
-              </label>
-              <label class="field field--wide">
-                <span>Notion editor page ID</span>
-                <input id="editorPageId" placeholder="아티클 편집기 page_id">
-              </label>
-              <label class="field field--wide">
-                <span>Notion article page ID</span>
-                <input id="articlePageId" placeholder="아티클 DB page_id">
+                <span>접근 토큰</span>
+                <input id="gasToken" placeholder="선택 입력">
               </label>
               <div class="pipeline-actions">
                 <button class="ui-button ui-button--secondary" type="button" data-gas-action="saveEditorData"><i data-lucide="database" aria-hidden="true"></i>Notion 저장</button>
@@ -288,17 +300,17 @@
           </section>
         </section>
 
-        <section class="preview" aria-label="Preview">
+        <section class="preview" aria-label="미리보기">
           <div class="preview__toolbar">
             <div>
-              <p class="panel-eyebrow">Preview</p>
+              <p class="panel-eyebrow">미리보기</p>
               <strong>아티클 미리보기</strong>
             </div>
             <div class="preview-controls">
-              <div class="segmented segmented--preview" role="group" aria-label="Preview size">
-                <button class="is-active" type="button" data-width="1440"><i data-lucide="monitor" aria-hidden="true"></i>Desktop</button>
-                <button type="button" data-width="834"><i data-lucide="tablet" aria-hidden="true"></i>Tablet</button>
-                <button type="button" data-width="390"><i data-lucide="smartphone" aria-hidden="true"></i>Mobile</button>
+              <div class="segmented segmented--preview" role="group" aria-label="미리보기 크기">
+                <button class="is-active" type="button" data-width="1440"><i data-lucide="monitor" aria-hidden="true"></i>PC</button>
+                <button type="button" data-width="834"><i data-lucide="tablet" aria-hidden="true"></i>태블릿</button>
+                <button type="button" data-width="390"><i data-lucide="smartphone" aria-hidden="true"></i>모바일</button>
               </div>
               <label class="viewport-slider">
                 <span id="viewportLabel">1440px</span>
@@ -308,7 +320,7 @@
           </div>
           <div class="preview__stage">
             <div id="deviceFrame" class="device-frame">
-              <iframe id="previewFrame" src="./preview.html" title="Article preview"></iframe>
+              <iframe id="previewFrame" src="./preview.html" title="아티클 미리보기"></iframe>
             </div>
           </div>
         </section>
