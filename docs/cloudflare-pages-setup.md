@@ -91,7 +91,15 @@ R2 bucket: anu-article
 ```text
 ARTI26-001 → /2026/arti26-001/image-1.jpg
 ARTI26-001 → /2026/arti26-001/duo-1.jpg
+ARTI26-001 → /2026/arti26-001/slide-1.jpg
 ```
+
+업로드가 실패하면 먼저 아래 네 가지를 확인한다.
+
+- Pages 프로젝트에 `ANU_ARTICLE_BUCKET` 바인딩이 있는지
+- `GAS_WEB_APP_TOKEN` 또는 `R2_UPLOAD_TOKEN`이 Production/Preview 변수에 모두 있는지
+- 에디터의 토큰 입력값이 위 변수 중 하나와 같은지
+- 경로가 `/2026/arti26-001/slot.jpg`처럼 맨 앞 `/`를 포함한 형태인지
 
 ## Proxy Route
 

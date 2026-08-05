@@ -151,7 +151,7 @@
             </div>
             <div class="meta-grid">
               <label class="field">
-                <span>Status</span>
+                <span>상태</span>
                 <select id="articleStatus">
                   <option>시작 전</option>
                   <option>작성 중</option>
@@ -161,7 +161,7 @@
                 </select>
               </label>
               <label class="field">
-                <span>Article code</span>
+                <span>아티클 코드</span>
                 <input id="articleCode" value="ARTI26-001">
               </label>
               <button class="ui-button ui-button--secondary field-button" type="button" id="generateArticleCode">
@@ -169,7 +169,7 @@
                 생성
               </button>
               <label class="field">
-                <span>Category</span>
+                <span>카테고리</span>
                 <select id="articleCategory">
                   <option value="life">life</option>
                   <option value="craft" selected>craft</option>
@@ -178,7 +178,7 @@
                 </select>
               </label>
               <label class="field">
-                <span>Type</span>
+                <span>유형</span>
                 <select id="articleType">
                   <option value="essay">essay</option>
                   <option value="interview">interview</option>
@@ -188,36 +188,36 @@
                 </select>
               </label>
               <div class="field">
-                <span>Publish date</span>
+                <span>발행일</span>
                 <div class="date-control">
-                  <button type="button" id="publishPrev" aria-label="Previous day">
+                  <button type="button" id="publishPrev" aria-label="이전 날짜">
                     <i data-lucide="chevron-left" aria-hidden="true"></i>
                   </button>
-                  <input id="publishDate" type="date" aria-label="Publish date">
-                  <button type="button" id="publishNext" aria-label="Next day">
+                  <input id="publishDate" type="date" aria-label="발행일">
+                  <button type="button" id="publishNext" aria-label="다음 날짜">
                     <i data-lucide="chevron-right" aria-hidden="true"></i>
                   </button>
-                  <button type="button" id="publishToday">Today</button>
-                  <button type="button" id="publishClear" aria-label="Clear publish date">
+                  <button type="button" id="publishToday">오늘</button>
+                  <button type="button" id="publishClear" aria-label="발행일 비우기">
                     <i data-lucide="x" aria-hidden="true"></i>
                   </button>
                 </div>
-                <small id="publishDateLabel" class="date-label">No date</small>
+                <small id="publishDateLabel" class="date-label">날짜 없음</small>
               </div>
               <label class="field">
-                <span>Cafe24 product no.</span>
+                <span>카페24 상품번호</span>
                 <input id="cafe24ProductNo" inputmode="numeric">
               </label>
               <label class="field">
-                <span>Cafe24 product code</span>
+                <span>카페24 상품코드</span>
                 <input id="cafe24ProductCode">
               </label>
               <label class="field">
-                <span>Product category IDs</span>
+                <span>상품분류 번호</span>
                 <input id="productCategoryIds" value="114|117">
               </label>
               <label class="field field--wide">
-                <span>Deck</span>
+                <span>요약문</span>
                 <textarea id="articleDeck">손의 촉감, 무게감, 곡선이 좋은 보울을 완성하는 방식을 살펴봅니다.</textarea>
               </label>
             </div>
@@ -233,16 +233,16 @@
             <div class="block-tools" aria-label="Add block">
               <div>
                 <span>Text</span>
-                <button type="button" data-add="text"><i data-lucide="type" aria-hidden="true"></i>Text</button>
-                <button type="button" data-add="quote"><i data-lucide="quote" aria-hidden="true"></i>Quote</button>
-                <button type="button" data-add="credit"><i data-lucide="badge-info" aria-hidden="true"></i>Credit</button>
+                <button type="button" data-add="text"><i data-lucide="type" aria-hidden="true"></i>텍스트</button>
+                <button type="button" data-add="quote"><i data-lucide="quote" aria-hidden="true"></i>인용</button>
+                <button type="button" data-add="credit"><i data-lucide="badge-info" aria-hidden="true"></i>크레딧</button>
               </div>
               <div>
                 <span>Media</span>
-                <button type="button" data-add="image"><i data-lucide="image" aria-hidden="true"></i>Image</button>
-                <button type="button" data-add="duo"><i data-lucide="columns-2" aria-hidden="true"></i>Duo</button>
-                <button type="button" data-add="slide"><i data-lucide="gallery-horizontal" aria-hidden="true"></i>Slide</button>
-                <button type="button" data-add="video"><i data-lucide="video" aria-hidden="true"></i>Video</button>
+                <button type="button" data-add="image"><i data-lucide="image" aria-hidden="true"></i>이미지</button>
+                <button type="button" data-add="duo"><i data-lucide="columns-2" aria-hidden="true"></i>듀오</button>
+                <button type="button" data-add="slide"><i data-lucide="gallery-horizontal" aria-hidden="true"></i>슬라이드</button>
+                <button type="button" data-add="video"><i data-lucide="video" aria-hidden="true"></i>비디오</button>
               </div>
             </div>
             <div id="blockList" class="block-list" aria-live="polite"></div>

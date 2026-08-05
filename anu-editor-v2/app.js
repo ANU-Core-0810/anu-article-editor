@@ -146,10 +146,10 @@ ${textChildrenToArticleHtml(block)}
       const mobileSrc = block.mobileSrc || block.src;
       return `<div class="arti-block arti-block--full" data-reveal>
   <div class="title-img-f">
-    <picture class="title-img-f__picture">
-      <source media="(min-width: 64rem)" srcset="${escapeAttr(normalizeImageUrl(block.src))}">
+    <div class="title-img-f__picture">
+      <img class="title-img-f__pc" src="${escapeAttr(normalizeImageUrl(block.src))}" alt="">
       <img class="title-img-f__mobile" src="${escapeAttr(normalizeImageUrl(mobileSrc))}" alt="">
-    </picture>${captionHtml(block.caption, 'arti-caption--inset')}
+    </div>${captionHtml(block.caption, 'arti-caption--inset')}
   </div>
 </div>`;
     }
@@ -192,7 +192,7 @@ ${items}
   }
 
   if (block.type === 'slide') {
-    const images = (block.images || []).filter(Boolean).map((src, index) => `
+    const images = normalizeSlideImages(block.images).filter(Boolean).map((src, index) => `
         <div class="img-slide__item${index === 0 ? ' is-active' : ''}">
           <img src="${escapeAttr(normalizeImageUrl(src))}" alt="">
           ${block.caption ? `<p hidden class="arti-caption">${escapeHtml(block.caption)}</p>` : ''}
@@ -273,14 +273,18 @@ function blockEditorHtml(block, index) {
 
 function inlineAddHtml(index) {
   return `<div class="inline-add" data-insert-after="${index}">
-    <span>Add below</span>
-    <button type="button" data-add-inline="text">${iconHtml('type')}Text</button>
-    <button type="button" data-add-inline="quote">${iconHtml('quote')}Quote</button>
-    <button type="button" data-add-inline="credit">${iconHtml('badge-info')}Credit</button>
-    <button type="button" data-add-inline="image">${iconHtml('image')}Image</button>
-    <button type="button" data-add-inline="duo">${iconHtml('columns-2')}Duo</button>
-    <button type="button" data-add-inline="slide">${iconHtml('gallery-horizontal')}Slide</button>
-    <button type="button" data-add-inline="video">${iconHtml('video')}Video</button>
+    <span>아래에 추가</span>
+    <div class="inline-add__group" aria-label="Text blocks">
+      <button type="button" data-add-inline="text" title="텍스트">${iconHtml('type')}텍스트</button>
+      <button type="button" data-add-inline="quote" title="인용">${iconHtml('quote')}인용</button>
+      <button type="button" data-add-inline="credit" title="크레딧">${iconHtml('badge-info')}크레딧</button>
+    </div>
+    <div class="inline-add__group" aria-label="Media blocks">
+      <button type="button" data-add-inline="image" title="이미지">${iconHtml('image')}이미지</button>
+      <button type="button" data-add-inline="duo" title="이미지 듀오">${iconHtml('columns-2')}듀오</button>
+      <button type="button" data-add-inline="slide" title="슬라이드">${iconHtml('gallery-horizontal')}슬라이드</button>
+      <button type="button" data-add-inline="video" title="비디오">${iconHtml('video')}비디오</button>
+    </div>
   </div>`;
 }
 
@@ -320,29 +324,29 @@ function blockFieldsHtml(block) {
       <div class="image-thumb"><img src="${escapeAttr(imageUrl)}" alt="" onerror="this.hidden=true"></div>
       <div class="block-card__body">
         <label class="field">
-          <span>R2 path or URL</span>
+          <span>이미지 경로 또는 URL</span>
           <input data-key="src" value="${escapeAttr(block.src)}">
         </label>
         <label class="field">
-          <span>Layout class</span>
+          <span>레이아웃</span>
           <select data-key="layout">
             ${IMAGE_LAYOUTS.map(value => optionHtml(value, block.layout)).join('')}
           </select>
         </label>
         <label class="field">
-          <span>Mobile image path</span>
+          <span>모바일 이미지 경로</span>
           <input data-key="mobileSrc" value="${escapeAttr(block.mobileSrc)}" placeholder="title-img-f에서 사용">
         </label>
         <label class="field">
-          <span>Caption</span>
+          <span>캡션</span>
           <input data-key="caption" value="${escapeAttr(block.caption)}">
         </label>
         <div class="image-actions">
           <label class="upload-button">
-            Upload
+            ${iconHtml('upload')}업로드
             <input class="sr-only" type="file" accept="image/*" data-upload-target="image">
           </label>
-          <button type="button" data-block-action="autoImagePath">Auto path</button>
+          <button type="button" data-block-action="autoImagePath">${iconHtml('route')}자동 경로</button>
         </div>
       </div>
     </div>`;
@@ -353,7 +357,7 @@ function blockFieldsHtml(block) {
     block.items = items;
     return `<div class="duo-editor">
       <label class="field">
-        <span>Duo layout</span>
+        <span>듀오 레이아웃</span>
         <select data-key="layout">
           ${DUO_LAYOUTS.map(value => optionHtml(value, block.layout || 'img-m-duo')).join('')}
         </select>
@@ -364,39 +368,62 @@ function blockFieldsHtml(block) {
           <div class="image-thumb"><img src="${escapeAttr(imageUrl)}" alt="" onerror="this.hidden=true"></div>
           <div class="duo-editor__fields">
             <label class="field">
-              <span>Image ${index + 1} path or URL</span>
+              <span>이미지 ${index + 1} 경로 또는 URL</span>
               <input data-key="duoItem" data-duo-key="src" data-duo-index="${index}" value="${escapeAttr(item.src)}">
             </label>
             <label class="field">
-              <span>Image ${index + 1} caption</span>
+              <span>이미지 ${index + 1} 캡션</span>
               <input data-key="duoItem" data-duo-key="caption" data-duo-index="${index}" value="${escapeAttr(item.caption)}">
             </label>
             <div class="image-actions">
               <label class="upload-button">
-                Upload
+                ${iconHtml('upload')}업로드
                 <input class="sr-only" type="file" accept="image/*" data-upload-target="duo" data-duo-index="${index}">
               </label>
-              <button type="button" data-duo-action="autoPath" data-duo-index="${index}">Auto path</button>
+              <button type="button" data-duo-action="autoPath" data-duo-index="${index}">${iconHtml('route')}자동 경로</button>
             </div>
           </div>
         </div>`;
       }).join('')}
       <label class="field">
-        <span>Shared caption</span>
+        <span>공통 캡션</span>
         <input data-key="caption" value="${escapeAttr(block.caption)}" placeholder="title-img-duo에서 사용">
       </label>
     </div>`;
   }
 
   if (block.type === 'slide') {
-    return `<label class="field">
-      <span>Image paths, one per line</span>
-      <textarea data-key="images">${escapeHtml((block.images || []).join('\n'))}</textarea>
-    </label>
-    <label class="field">
-      <span>Caption</span>
-      <input data-key="caption" value="${escapeAttr(block.caption)}">
-    </label>`;
+    block.images = normalizeSlideImages(block.images);
+    return `<div class="slide-editor">
+      <div class="slide-editor__head">
+        <span>슬라이드 이미지</span>
+        <button type="button" data-slide-action="add">${iconHtml('plus')}이미지 추가</button>
+      </div>
+      ${block.images.map((src, index) => {
+        const imageUrl = normalizeImageUrl(src);
+        return `<div class="slide-editor__item" data-slide-index="${index}">
+          <div class="image-thumb"><img src="${escapeAttr(imageUrl)}" alt="" onerror="this.hidden=true"></div>
+          <div class="slide-editor__fields">
+            <label class="field">
+              <span>이미지 ${index + 1} 경로 또는 URL</span>
+              <input data-key="slideImage" data-slide-index="${index}" value="${escapeAttr(src)}">
+            </label>
+            <div class="image-actions">
+              <label class="upload-button">
+                ${iconHtml('upload')}업로드
+                <input class="sr-only" type="file" accept="image/*" data-upload-target="slide" data-slide-index="${index}">
+              </label>
+              <button type="button" data-slide-action="autoPath" data-slide-index="${index}">${iconHtml('route')}자동 경로</button>
+              <button type="button" data-slide-action="remove" data-slide-index="${index}" aria-label="슬라이드 이미지 삭제">${iconHtml('trash-2')}삭제</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+      <label class="field">
+        <span>공통 캡션</span>
+        <input data-key="caption" value="${escapeAttr(block.caption)}">
+      </label>
+    </div>`;
   }
 
   if (block.type === 'video') {
@@ -469,6 +496,14 @@ function bindEvents() {
       return;
     }
 
+    const slideButton = event.target.closest('[data-slide-action]');
+    if (slideButton) {
+      const card = slideButton.closest('.block-card');
+      if (!card) return;
+      handleSlideAction(card.dataset.id, slideButton.dataset.slideAction, Number(slideButton.dataset.slideIndex));
+      return;
+    }
+
     const button = event.target.closest('[data-block-action]');
     if (!button) return;
     const card = button.closest('.block-card');
@@ -522,6 +557,12 @@ function bindEvents() {
       if (!block.items) block.items = normalizeDuoItems([]);
       if (block.items[index] && ['src', 'caption'].includes(duoKey)) {
         block.items[index][duoKey] = event.target.value;
+      }
+    } else if (key === 'slideImage') {
+      const index = Number(event.target.dataset.slideIndex);
+      block.images = normalizeSlideImages(block.images);
+      if (Number.isFinite(index) && block.images[index] !== undefined) {
+        block.images[index] = event.target.value;
       }
     } else if (key === 'images' || key === 'rows') {
       block[key] = linesFromText(event.target.value);
@@ -685,7 +726,7 @@ function shiftPublishDate(deltaDays) {
 function updatePublishDateLabel() {
   const date = parseDateInputValue(els.publishDate.value);
   if (!date) {
-    els.publishDateLabel.textContent = 'No date';
+    els.publishDateLabel.textContent = '날짜 없음';
     return;
   }
   els.publishDateLabel.textContent = new Intl.DateTimeFormat('ko-KR', {
@@ -790,6 +831,33 @@ function handleDuoAction(blockId, action, itemIndex) {
   markSaved('Editing');
 }
 
+function handleSlideAction(blockId, action, imageIndex) {
+  const block = state.blocks.find(item => item.id === blockId);
+  if (!block || block.type !== 'slide') return;
+  block.images = normalizeSlideImages(block.images);
+
+  if (action === 'add') {
+    ensureArticleCodeForAssets();
+    block.images.push(buildArticleAssetPath(`slide-${block.images.length + 1}`, 'image.jpg'));
+  } else if (action === 'remove') {
+    if (block.images.length <= 1) {
+      block.images = [''];
+      markSaved('Keep one image');
+      renderBlockList();
+      updatePreview();
+      return;
+    }
+    block.images.splice(imageIndex, 1);
+  } else if (action === 'autoPath' && block.images[imageIndex] !== undefined) {
+    ensureArticleCodeForAssets();
+    block.images[imageIndex] = buildArticleAssetPath(`slide-${imageIndex + 1}`, block.images[imageIndex] || 'image.jpg');
+  }
+
+  renderBlockList();
+  updatePreview();
+  markSaved('Editing');
+}
+
 async function handleImageUpload(input) {
   const file = input.files && input.files[0];
   const card = input.closest('.block-card');
@@ -800,8 +868,13 @@ async function handleImageUpload(input) {
 
   const uploadTarget = input.dataset.uploadTarget;
   const duoIndex = Number(input.dataset.duoIndex);
+  const slideIndex = Number(input.dataset.slideIndex);
   ensureArticleCodeForAssets();
-  const slot = uploadTarget === 'duo' ? `duo-${duoIndex + 1}` : imageSlotName(block);
+  const slot = uploadTarget === 'duo'
+    ? `duo-${duoIndex + 1}`
+    : uploadTarget === 'slide'
+      ? `slide-${slideIndex + 1}`
+      : imageSlotName(block);
   const assetPath = buildArticleAssetPath(slot, file.name);
 
   try {
@@ -812,6 +885,9 @@ async function handleImageUpload(input) {
     if (uploadTarget === 'duo') {
       block.items = normalizeDuoItems(block.items);
       if (block.items[duoIndex]) block.items[duoIndex].src = savedPath;
+    } else if (uploadTarget === 'slide') {
+      block.images = normalizeSlideImages(block.images);
+      if (block.images[slideIndex] !== undefined) block.images[slideIndex] = savedPath;
     } else {
       block.src = savedPath;
     }
@@ -1317,37 +1393,37 @@ function cloneBlock(block) {
 function createBlock(type) {
   const id = createBlockId();
   if (type === 'image') {
-    const codeSlug = slugArticleCode(state.meta.code);
     return {
       id,
       type,
       layout: 'img-m',
-      src: `/2026/${codeSlug}/image-01.jpg`,
+      src: buildArticleAssetPath('image-1', 'image.jpg'),
       mobileSrc: '',
       caption: '',
     };
   }
 
   if (type === 'duo') {
-    const codeSlug = slugArticleCode(state.meta.code);
     return {
       id,
       type,
       layout: 'img-m-duo',
       items: [
-        { src: `/2026/${codeSlug}/duo-01.jpg`, caption: '' },
-        { src: `/2026/${codeSlug}/duo-02.jpg`, caption: '' },
+        { src: buildArticleAssetPath('duo-1', 'image.jpg'), caption: '' },
+        { src: buildArticleAssetPath('duo-2', 'image.jpg'), caption: '' },
       ],
       caption: '',
     };
   }
 
   if (type === 'slide') {
-    const codeSlug = slugArticleCode(state.meta.code);
     return {
       id,
       type,
-      images: [`/2026/${codeSlug}/slide-01.jpg`, `/2026/${codeSlug}/slide-02.jpg`],
+      images: [
+        buildArticleAssetPath('slide-1', 'image.jpg'),
+        buildArticleAssetPath('slide-2', 'image.jpg'),
+      ],
       caption: '',
     };
   }
@@ -1890,6 +1966,13 @@ function normalizeDuoItems(items) {
     });
   }
   return normalized;
+}
+
+function normalizeSlideImages(images) {
+  const normalized = Array.isArray(images)
+    ? images.map(src => String(src || '').trim()).filter(Boolean)
+    : linesFromText(images);
+  return normalized.length ? normalized : [buildArticleAssetPath('slide-1', 'image.jpg')];
 }
 
 function itemsToLines(items) {
